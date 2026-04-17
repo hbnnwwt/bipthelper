@@ -117,8 +117,22 @@
 
     <!-- ── Config list ── -->
     <div class="config-list">
+      <!-- Filter bar -->
+      <div class="config-filters">
+        <input v-model.lazy="filterSearch" type="search" placeholder="搜索配置名称..." class="filter-input" />
+        <select v-model="filterParent" class="filter-select">
+          <option value="">全部大类</option>
+          <option v-for="p in parentOptions" :key="p" :value="p">{{ p }}</option>
+        </select>
+        <select v-model="filterSub" class="filter-select">
+          <option value="">全部分类</option>
+          <option v-for="s in subOptions" :key="s" :value="s">{{ s }}</option>
+        </select>
+        <span class="filter-count">{{ filteredConfigs.length }} / {{ configs.length }}</span>
+      </div>
+
       <div class="config-list-header">
-        <span class="config-list-count">{{ configs.length }} 个配置</span>
+        <span class="config-list-count">{{ filteredConfigs.length }} 个配置{{ filterSearch || filterParent || filterSub ? '（已过滤）' : '' }}</span>
       </div>
       <div class="table-wrapper">
         <table class="data-table">
@@ -137,7 +151,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="c in configs" :key="c.id">
+            <tr v-for="c in filteredConfigs" :key="c.id">
               <td>
                 <a :href="c.url" target="_blank" class="link">{{ c.name }}</a>
                 <div class="cell-url">{{ c.url }}</div>
@@ -166,14 +180,14 @@
               <!-- 进度列 -->
               <td class="cell-progress">
                 <!-- 正在爬取此配置 -->
-                <template v-if="crawlProgress.phase === 'running' && crawlProgress.current_config_id === c.id">
+                <template v-if="getConfigProgressStatus(c.id) === 'running'">
                   <div class="row-progress">
                     <div class="row-progress-track">
                       <div class="row-progress-fill" :style="{ width: getRowProgress(c.id) + '%' }"></div>
                     </div>
                     <span class="row-progress-label">
-                      {{ crawlProgress.page }}/{{ crawlProgress.total_pages || '?' }}页 ·
-                      {{ crawlProgress.articles_crawled }}{{ crawlProgress.articles_total > 0 ? '/' + crawlProgress.articles_total : '' }}篇
+                      {{ getConfigProgress(c.id).page }}/{{ getConfigProgress(c.id).total_pages || '?' }}页 ·
+                      {{ getConfigProgress(c.id).articles_crawled }}{{ getConfigProgress(c.id).articles_total > 0 ? '/' + getConfigProgress(c.id).articles_total : '' }}篇
                     </span>
                   </div>
                 </template>
@@ -247,9 +261,12 @@ const selectedConfigIds = ref([])
 const logs = ref([])
 const logBox = ref(null)
 const crawlStatus = ref({ running: false })
-const crawlProgress = ref({ phase: 'idle', current_config: '', current_config_id: null, config_index: 0, total_configs: 0, page: 0, total_pages: 0, articles_crawled: 0, articles_total: 0 })
+const crawlProgress = ref({ phase: 'idle', configs: [], current_config: '', current_config_id: null, config_index: 0, total_configs: 0, page: 0, total_pages: 0, articles_crawled: 0, articles_total: 0 })
 const crawlLoading = ref(false)
 const navLoading = ref(false)
+const filterSearch = ref('')
+const filterParent = ref('')
+const filterSub = ref('')
 let logTimer = null
 let statusTimer = null
 // 速度计算：记录上次状态用于计算爬取速度
@@ -258,26 +275,22 @@ let lastProgressTime = Date.now()
 
 // 整体进度百分比
 const overallPercent = computed(() => {
-  const { phase, config_index, total_configs, articles_crawled, articles_total, total_pages, page } = crawlProgress.value
+  const { phase, configs } = crawlProgress.value
 
-  if (phase !== 'running') return 0
+  if (phase !== 'running' || !configs?.length) return 0
 
-  // 整体进度 = (已完成配置数 + 当前配置的文章进度) / 总配置数
-  if (total_configs > 0 && articles_total > 0) {
-    const configsDone = config_index - 1
-    const articleProgress = articles_crawled / articles_total
-    return Math.round((configsDone + articleProgress) / total_configs * 100)
-  }
+  const doneCount = configs.filter(c => c.status === 'done' || c.status === 'stopped').length
+  const runningIdx = configs.findIndex(c => c.status === 'running')
+  if (runningIdx < 0) return Math.round(doneCount / configs.length * 100)
 
-  // 只有页数信息时
-  if (total_pages > 0) {
-    const configsDone = config_index - 1
-    const pageProgress = page / total_pages
-    return Math.round((configsDone + pageProgress) / total_configs * 100)
-  }
-
-  // 解析中
-  return 5
+  const running = configs[runningIdx]
+  const baseFrac = doneCount / configs.length
+  const runningFrac = running.articles_total > 0
+    ? (running.articles_crawled / running.articles_total) / configs.length
+    : running.total_pages > 0
+    ? (running.page / running.total_pages) / configs.length
+    : 0
+  return Math.round((baseFrac + runningFrac) * 100)
 })
 
 // 根据索引获取配置ID（1-based index）
@@ -288,16 +301,25 @@ function getConfigByIndex(index) {
 
 // 获取某配置的当前行内进度百分比
 function getRowProgress(configId) {
-  const { phase, current_config_id, articles_crawled, articles_total, total_pages, page } = crawlProgress.value
-  if (phase !== 'running' || current_config_id !== configId) return 0
+  const cfg = crawlProgress.value.configs?.find(c => c.id === configId)
+  if (!cfg) return 0
+  if (cfg.status === 'done' || cfg.status === 'stopped') return 100
+  if (cfg.status === 'running') {
+    if (cfg.articles_total > 0) return Math.round(cfg.articles_crawled / cfg.articles_total * 100)
+    if (cfg.total_pages > 0) return Math.round(cfg.page / cfg.total_pages * 100)
+    return 5
+  }
+  return 0
+}
 
-  if (articles_total > 0) {
-    return Math.round(articles_crawled / articles_total * 100)
-  }
-  if (total_pages > 0) {
-    return Math.round(page / total_pages * 100)
-  }
-  return 5
+// 获取某配置的进度状态
+function getConfigProgressStatus(configId) {
+  return crawlProgress.value.configs?.find(c => c.id === configId)?.status || 'pending'
+}
+
+// 获取某配置的进度数据
+function getConfigProgress(configId) {
+  return crawlProgress.value.configs?.find(c => c.id === configId) || { page: 0, total_pages: 0, articles_crawled: 0, articles_total: 0 }
 }
 
 const crawlSpeed = computed(() => {
@@ -317,6 +339,20 @@ const crawlSpeed = computed(() => {
   lastArticlesCrawled = crawlProgress.value.articles_crawled
   lastProgressTime = now
   return speed
+})
+
+// 三级过滤
+const parentOptions = computed(() => [...new Set(configs.value.map(c => c.parent_category).filter(Boolean))])
+const subOptions = computed(() => {
+  if (!filterParent.value) return [...new Set(configs.value.map(c => c.sub_category).filter(Boolean))]
+  return [...new Set(configs.value.filter(c => c.parent_category === filterParent.value).map(c => c.sub_category).filter(Boolean))]
+})
+const filteredConfigs = computed(() => {
+  let list = configs.value
+  if (filterSearch.value) list = list.filter(c => c.name.toLowerCase().includes(filterSearch.value.toLowerCase()))
+  if (filterParent.value) list = list.filter(c => c.parent_category === filterParent.value)
+  if (filterSub.value) list = list.filter(c => c.sub_category === filterSub.value)
+  return list
 })
 
 const newConfig = ref({
@@ -710,6 +746,26 @@ watch(() => props.tab, (newTab) => {
   font-weight: 600;
   color: var(--color-text-muted);
   letter-spacing: 0.02em;
+}
+
+/* ── Filter bar ── */
+.config-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+.filter-input {
+  width: 160px;
+}
+.filter-select {
+  min-width: 100px;
+}
+.filter-count {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 /* ── Table wrapper ── */
