@@ -105,6 +105,7 @@ logger = logging.getLogger(__name__)
 
 # 爬虫运行状态（线程安全）
 _crawl_lock = threading.Lock()
+_progress_lock = threading.Lock()
 crawl_running = False
 crawl_stop_requested = False
 
@@ -162,20 +163,21 @@ def request_crawl_stop():
 def reset_crawl_state():
     """重置爬虫状态"""
     global crawl_running, crawl_stop_requested, crawl_progress
-    crawl_running = False
-    crawl_stop_requested = False
-    crawl_progress = {
-        "phase": "idle",
-        "current_config": "",
-        "current_config_id": None,
-        "config_index": 0,
-        "total_configs": 0,
-        "configs": [],
-        "page": 0,
-        "total_pages": 0,
-        "articles_crawled": 0,
-        "articles_total": 0,
-    }
+    with _progress_lock:
+        crawl_running = False
+        crawl_stop_requested = False
+        crawl_progress = {
+            "phase": "idle",
+            "current_config": "",
+            "current_config_id": None,
+            "config_index": 0,
+            "total_configs": 0,
+            "configs": [],
+            "page": 0,
+            "total_pages": 0,
+            "articles_crawled": 0,
+            "articles_total": 0,
+        }
 
 def is_crawl_stopped():
     return crawl_stop_requested
@@ -571,10 +573,6 @@ def crawl_article(url: str, config: CrawlConfig, session: Session) -> bool:
         logger.error(f"[crawl_article] Failed to crawl article {url}: {e}")
         return False
 
-    except Exception as e:
-        logger.error(f"Failed to crawl article {url}: {e}")
-        return False
-
 def crawl_list_page(config: CrawlConfig, session: Session) -> int:
     """爬取列表页及其分页，返回新增/更新的文章数量"""
     if not config.is_list_page:
@@ -772,6 +770,7 @@ def crawl_all(session=None):
             global crawl_progress
             crawl_running = False
             crawl_stop_requested = False
+        with _progress_lock:
             crawl_progress = {
                 "phase": "idle",
                 "current_config": "",
@@ -806,21 +805,24 @@ def _crawl_all_impl(session: Session):
     ]
     for i, config in enumerate(db_configs):
         if crawl_stop_requested:
-            crawl_progress["phase"] = "stopping"
-            crawl_progress["configs"][i]["status"] = "stopped"
+            with _progress_lock:
+                crawl_progress["phase"] = "stopping"
+                crawl_progress["configs"][i]["status"] = "stopped"
             logger.info("Crawl stopped by user (between configs)")
             break
-        crawl_progress["phase"] = "running"
-        crawl_progress["config_index"] = i + 1
-        crawl_progress["current_config"] = config.name
-        crawl_progress["current_config_id"] = config.id
-        crawl_progress["page"] = 0
-        crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
-        # 设置当前 config 状态为 running
-        crawl_progress["configs"][i]["status"] = "running"
+        with _progress_lock:
+            crawl_progress["phase"] = "running"
+            crawl_progress["config_index"] = i + 1
+            crawl_progress["current_config"] = config.name
+            crawl_progress["current_config_id"] = config.id
+            crawl_progress["page"] = 0
+            crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
+            # 设置当前 config 状态为 running
+            crawl_progress["configs"][i]["status"] = "running"
         new_count = crawl_list_page(config, session)
         # 设置当前 config 状态为 done
-        crawl_progress["configs"][i]["status"] = "done"
+        with _progress_lock:
+            crawl_progress["configs"][i]["status"] = "done"
 
 
 def crawl_configs(config_ids: list[str], session=None):
@@ -843,6 +845,7 @@ def crawl_configs(config_ids: list[str], session=None):
             global crawl_progress
             crawl_running = False
             crawl_stop_requested = False
+        with _progress_lock:
             crawl_progress = {
                 "phase": "idle",
                 "current_config": "",
@@ -1065,21 +1068,24 @@ def _crawl_configs_impl(session: Session, config_ids: list[str]):
     ]
     for i, config in enumerate(db_configs):
         if crawl_stop_requested:
-            crawl_progress["phase"] = "stopping"
-            crawl_progress["configs"][i]["status"] = "stopped"
+            with _progress_lock:
+                crawl_progress["phase"] = "stopping"
+                crawl_progress["configs"][i]["status"] = "stopped"
             logger.info("Crawl stopped by user (between configs)")
             break
-        crawl_progress["phase"] = "running"
-        crawl_progress["config_index"] = i + 1
-        crawl_progress["current_config"] = config.name
-        crawl_progress["current_config_id"] = config.id
-        crawl_progress["page"] = 0
-        crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
-        # 设置当前 config 状态为 running
-        crawl_progress["configs"][i]["status"] = "running"
+        with _progress_lock:
+            crawl_progress["phase"] = "running"
+            crawl_progress["config_index"] = i + 1
+            crawl_progress["current_config"] = config.name
+            crawl_progress["current_config_id"] = config.id
+            crawl_progress["page"] = 0
+            crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
+            # 设置当前 config 状态为 running
+            crawl_progress["configs"][i]["status"] = "running"
         new_count = crawl_list_page(config, session)
         # 设置当前 config 状态为 done
-        crawl_progress["configs"][i]["status"] = "done"
+        with _progress_lock:
+            crawl_progress["configs"][i]["status"] = "done"
 
 def add_crawl_config(name: str, url: str, selector: str, category: str, session: Session,
                      is_list_page: bool = True, article_selector: str = "a",

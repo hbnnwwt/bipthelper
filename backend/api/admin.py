@@ -15,7 +15,7 @@ from models.invite_code import InviteCode
 from services.invite import code_status
 from services.auth import get_current_admin
 from services.audit import add_audit_log
-from services.crawler import crawl_all, add_crawl_config, crawl_running, crawl_stop_requested, request_crawl_stop, crawl_progress, crawl_homepage_navigation
+from services.crawler import crawl_all, add_crawl_config, crawl_running, crawl_stop_requested, request_crawl_stop, crawl_progress, crawl_homepage_navigation, _progress_lock
 from services.log_store import log_store
 from services.search import delete_document_from_index, index_document
 
@@ -464,7 +464,8 @@ def get_crawl_progress(
     current_admin: User = Depends(get_current_admin),
 ):
     """获取爬取进度详情"""
-    return crawl_progress
+    with _progress_lock:
+        return dict(crawl_progress)
 
 @router.post("/crawl/stop")
 def stop_crawl(
