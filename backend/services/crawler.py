@@ -123,6 +123,7 @@ crawl_progress = {
     "current_config_id": None,
     "config_index": 0,
     "total_configs": 0,
+    "configs": [],          # 每个配置的明细状态
     "page": 0,
     "total_pages": 0,          # 当前配置的总页数（解析分页控件获取）
     "articles_crawled": 0,
@@ -169,6 +170,7 @@ def reset_crawl_state():
         "current_config_id": None,
         "config_index": 0,
         "total_configs": 0,
+        "configs": [],
         "page": 0,
         "total_pages": 0,
         "articles_crawled": 0,
@@ -612,6 +614,10 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
         crawl_progress["page"] = page_count
         crawl_progress["total_pages"] = total_pages
         crawl_progress["articles_total"] = total_articles
+        # 同步到 configs 明细
+        idx = crawl_progress["config_index"] - 1
+        if idx >= 0 and idx < len(crawl_progress["configs"]):
+            crawl_progress["configs"][idx]["page"] = page_count
         # 第一页不延时，之后翻页前延时
         if page_count > 1:
             time.sleep(_crawl_delay(settings.CRAWL_DELAY_SECONDS))
@@ -629,6 +635,11 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
                 total_articles = extract_total_articles(html)
                 crawl_progress["total_pages"] = total_pages
                 crawl_progress["articles_total"] = total_articles
+                # 同步到 configs 明细
+                idx = crawl_progress["config_index"] - 1
+                if idx >= 0 and idx < len(crawl_progress["configs"]):
+                    crawl_progress["configs"][idx]["total_pages"] = total_pages
+                    crawl_progress["configs"][idx]["articles_total"] = total_articles
                 logger.info(f"Parsed total pages: {total_pages}, total articles: {total_articles}")
 
             # 提取文章链接
@@ -650,6 +661,10 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
                         new_count += 1
                     articles_crawled_count += 1
                     crawl_progress["articles_crawled"] = articles_crawled_count
+                    # 同步到 configs 明细
+                    idx = crawl_progress["config_index"] - 1
+                    if idx >= 0 and idx < len(crawl_progress["configs"]):
+                        crawl_progress["configs"][idx]["articles_crawled"] = articles_crawled_count
                     visited_articles.add(article_url)
                 elif is_incremental:
                     logger.info(f"Skipping already crawled: {article_url}")
@@ -682,6 +697,11 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
                         total_articles = extract_total_articles(html)
                         crawl_progress["total_pages"] = total_pages
                         crawl_progress["articles_total"] = total_articles
+                        # 同步到 configs 明细
+                        idx = crawl_progress["config_index"] - 1
+                        if idx >= 0 and idx < len(crawl_progress["configs"]):
+                            crawl_progress["configs"][idx]["total_pages"] = total_pages
+                            crawl_progress["configs"][idx]["articles_total"] = total_articles
 
                     article_links = extract_article_links(html, page_url, config.article_selector, config.link_prefix)
                     logger.info(f"Retry success: found {len(article_links)} article links on page {page_count}")
@@ -695,6 +715,10 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
                                 new_count += 1
                             articles_crawled_count += 1
                             crawl_progress["articles_crawled"] = articles_crawled_count
+                            # 同步到 configs 明细
+                            idx = crawl_progress["config_index"] - 1
+                            if idx >= 0 and idx < len(crawl_progress["configs"]):
+                                crawl_progress["configs"][idx]["articles_crawled"] = articles_crawled_count
                             visited_articles.add(article_url)
 
                     if config.pagination_selector:
@@ -751,6 +775,7 @@ def crawl_all(session=None):
                 "current_config_id": None,
                 "config_index": 0,
                 "total_configs": 0,
+                "configs": [],
                 "page": 0,
                 "total_pages": 0,
                 "articles_crawled": 0,
@@ -760,10 +785,23 @@ def crawl_all(session=None):
 def _crawl_all_impl(session: Session):
     """实际爬取逻辑"""
     global crawl_progress
-    configs = session.exec(select(CrawlConfig).where(CrawlConfig.enabled == True)).all()
-    total = len(configs)
+    db_configs = session.exec(select(CrawlConfig).where(CrawlConfig.enabled == True)).all()
+    total = len(db_configs)
     crawl_progress["total_configs"] = total
-    for i, config in enumerate(configs):
+    # 初始化 configs 明细列表
+    crawl_progress["configs"] = [
+        {
+            "id": c.id,
+            "name": c.name,
+            "page": 0,
+            "total_pages": 0,
+            "articles_crawled": 0,
+            "articles_total": 0,
+            "status": "pending",
+        }
+        for c in db_configs
+    ]
+    for i, config in enumerate(db_configs):
         if crawl_stop_requested:
             crawl_progress["phase"] = "stopping"
             logger.info("Crawl stopped by user (between configs)")
@@ -774,7 +812,11 @@ def _crawl_all_impl(session: Session):
         crawl_progress["current_config_id"] = config.id
         crawl_progress["page"] = 0
         crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
+        # 设置当前 config 状态为 running
+        crawl_progress["configs"][i]["status"] = "running"
         new_count = crawl_list_page(config, session)
+        # 设置当前 config 状态为 done
+        crawl_progress["configs"][i]["status"] = "done"
 
 
 def crawl_configs(config_ids: list[str], session=None):
@@ -802,6 +844,7 @@ def crawl_configs(config_ids: list[str], session=None):
                 "current_config_id": None,
                 "config_index": 0,
                 "total_configs": 0,
+                "configs": [],
                 "page": 0,
                 "total_pages": 0,
                 "articles_crawled": 0,
@@ -998,11 +1041,24 @@ def _crawl_list_page_with_event(config: CrawlConfig, session: Session, stop_even
 def _crawl_configs_impl(session: Session, config_ids: list[str]):
     """爬取指定配置的内部实现"""
     global crawl_progress
-    configs = [session.get(CrawlConfig, cid) for cid in config_ids]
-    configs = [c for c in configs if c is not None and c.enabled]
-    total = len(configs)
+    db_configs = [session.get(CrawlConfig, cid) for cid in config_ids]
+    db_configs = [c for c in db_configs if c is not None and c.enabled]
+    total = len(db_configs)
     crawl_progress["total_configs"] = total
-    for i, config in enumerate(configs):
+    # 初始化 configs 明细列表
+    crawl_progress["configs"] = [
+        {
+            "id": c.id,
+            "name": c.name,
+            "page": 0,
+            "total_pages": 0,
+            "articles_crawled": 0,
+            "articles_total": 0,
+            "status": "pending",
+        }
+        for c in db_configs
+    ]
+    for i, config in enumerate(db_configs):
         if crawl_stop_requested:
             crawl_progress["phase"] = "stopping"
             logger.info("Crawl stopped by user (between configs)")
@@ -1013,7 +1069,11 @@ def _crawl_configs_impl(session: Session, config_ids: list[str]):
         crawl_progress["current_config_id"] = config.id
         crawl_progress["page"] = 0
         crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
+        # 设置当前 config 状态为 running
+        crawl_progress["configs"][i]["status"] = "running"
         new_count = crawl_list_page(config, session)
+        # 设置当前 config 状态为 done
+        crawl_progress["configs"][i]["status"] = "done"
 
 def add_crawl_config(name: str, url: str, selector: str, category: str, session: Session,
                      is_list_page: bool = True, article_selector: str = "a",
