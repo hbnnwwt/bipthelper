@@ -1,0 +1,203 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link "搜索" [ref=e7] [cursor=pointer]:
+          - /url: /search
+          - img [ref=e8]
+        - generic [ref=e11]: 对话
+      - button "新建会话" [active] [ref=e12] [cursor=pointer]:
+        - img [ref=e13]
+    - listbox "会话列表" [ref=e14]:
+      - option "新对话 删除会话 新对话" [selected] [ref=e38] [cursor=pointer]:
+        - generic [ref=e39]: 新对话
+        - button "删除会话 新对话" [ref=e40]:
+          - img [ref=e41]
+      - option "新对话 删除会话 新对话" [ref=e44] [cursor=pointer]:
+        - generic [ref=e45]: 新对话
+        - button "删除会话 新对话" [ref=e46]:
+          - img [ref=e47]
+      - option "3月份以来，哪个菜品被供应的最多 删除会话 3月份以来，哪个菜品被供应的最多" [ref=e50] [cursor=pointer]:
+        - generic [ref=e51]: 3月份以来，哪个菜品被供应的最多
+        - button "删除会话 3月份以来，哪个菜品被供应的最多" [ref=e52]:
+          - img [ref=e53]
+      - option "新对话 删除会话 新对话" [ref=e56] [cursor=pointer]:
+        - generic [ref=e57]: 新对话
+        - button "删除会话 新对话" [ref=e58]:
+          - img [ref=e59]
+      - option "4月以来哪个菜被提供最多 删除会话 4月以来哪个菜被提供最多" [ref=e62] [cursor=pointer]:
+        - generic [ref=e63]: 4月以来哪个菜被提供最多
+        - button "删除会话 4月以来哪个菜被提供最多" [ref=e64]:
+          - img [ref=e65]
+      - option "新对话 删除会话 新对话" [ref=e68] [cursor=pointer]:
+        - generic [ref=e69]: 新对话
+        - button "删除会话 新对话" [ref=e70]:
+          - img [ref=e71]
+      - option "新对话 删除会话 新对话" [ref=e74] [cursor=pointer]:
+        - generic [ref=e75]: 新对话
+        - button "删除会话 新对话" [ref=e76]:
+          - img [ref=e77]
+      - option "4月以来哪个菜被提供最多，哪些天提供了这个菜 删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e80] [cursor=pointer]:
+        - generic [ref=e81]: 4月以来哪个菜被提供最多，哪些天提供了这个菜
+        - button "删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e82]:
+          - img [ref=e83]
+      - option "4月以来哪个菜被提供最多，哪些天提供了这个菜 删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e86] [cursor=pointer]:
+        - generic [ref=e87]: 4月以来哪个菜被提供最多，哪些天提供了这个菜
+        - button "删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e88]:
+          - img [ref=e89]
+      - option "test 删除会话 test" [ref=e92] [cursor=pointer]:
+        - generic [ref=e93]: test
+        - button "删除会话 test" [ref=e94]:
+          - img [ref=e95]
+      - option "国家奖学金每年有多少人得奖 删除会话 国家奖学金每年有多少人得奖" [ref=e98] [cursor=pointer]:
+        - generic [ref=e99]: 国家奖学金每年有多少人得奖
+        - button "删除会话 国家奖学金每年有多少人得奖" [ref=e100]:
+          - img [ref=e101]
+      - option "test 删除会话 test" [ref=e104] [cursor=pointer]:
+        - generic [ref=e105]: test
+        - button "删除会话 test" [ref=e106]:
+          - img [ref=e107]
+      - option "新对话 删除会话 新对话" [ref=e110] [cursor=pointer]:
+        - generic [ref=e111]: 新对话
+        - button "删除会话 新对话" [ref=e112]:
+          - img [ref=e113]
+      - option "4月以来哪个菜被提供最多 删除会话 4月以来哪个菜被提供最多" [ref=e116] [cursor=pointer]:
+        - generic [ref=e117]: 4月以来哪个菜被提供最多
+        - button "删除会话 4月以来哪个菜被提供最多" [ref=e118]:
+          - img [ref=e119]
+      - option "新对话 删除会话 新对话" [ref=e122] [cursor=pointer]:
+        - generic [ref=e123]: 新对话
+        - button "删除会话 新对话" [ref=e124]:
+          - img [ref=e125]
+      - option "新对话 删除会话 新对话" [ref=e128] [cursor=pointer]:
+        - generic [ref=e129]: 新对话
+        - button "删除会话 新对话" [ref=e130]:
+          - img [ref=e131]
+      - option "4月以来哪个菜被提供最多 删除会话 4月以来哪个菜被提供最多" [ref=e134] [cursor=pointer]:
+        - generic [ref=e135]: 4月以来哪个菜被提供最多
+        - button "删除会话 4月以来哪个菜被提供最多" [ref=e136]:
+          - img [ref=e137]
+      - option "新对话 删除会话 新对话" [ref=e140] [cursor=pointer]:
+        - generic [ref=e141]: 新对话
+        - button "删除会话 新对话" [ref=e142]:
+          - img [ref=e143]
+    - generic [ref=e15]:
+      - link "A admin 1100 积分" [ref=e16] [cursor=pointer]:
+        - /url: /profile
+        - generic [ref=e18]: A
+        - generic [ref=e19]:
+          - generic [ref=e20]: admin
+          - generic [ref=e21]: 1100 积分
+      - link "管理后台" [ref=e22] [cursor=pointer]:
+        - /url: /admin
+        - img [ref=e23]
+      - button "退出登录" [ref=e26] [cursor=pointer]:
+        - img [ref=e27]
+  - main [ref=e30]:
+    - log "对话消息" [ref=e31]:
+      - generic [ref=e146]:
+        - generic [ref=e147]:
+          - img [ref=e149]
+          - generic [ref=e151]:
+            - heading "晚上好，admin" [level=2] [ref=e152]
+            - paragraph [ref=e153]: 有什么我能帮你的？
+          - link "1100 积分" [ref=e154] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=e155]: "1100"
+            - generic [ref=e156]: 积分
+        - generic [ref=e157]:
+          - button "食堂营业时间" [ref=e158] [cursor=pointer]:
+            - generic [ref=e159]: 食堂营业时间
+            - img [ref=e160]
+          - button "奖学金申请流程" [ref=e162] [cursor=pointer]:
+            - generic [ref=e163]: 奖学金申请流程
+            - img [ref=e164]
+          - button "考试安排" [ref=e166] [cursor=pointer]:
+            - generic [ref=e167]: 考试安排
+            - img [ref=e168]
+          - button "图书馆开放时间" [ref=e170] [cursor=pointer]:
+            - generic [ref=e171]: 图书馆开放时间
+            - img [ref=e172]
+          - button "校园卡充值" [ref=e174] [cursor=pointer]:
+            - generic [ref=e175]: 校园卡充值
+            - img [ref=e176]
+          - button "宿舍管理规定" [ref=e178] [cursor=pointer]:
+            - generic [ref=e179]: 宿舍管理规定
+            - img [ref=e180]
+        - generic [ref=e182]:
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - heading "最近通知" [level=3] [ref=e185]
+              - generic [ref=e186]: "6"
+            - generic [ref=e187]:
+              - link "关于举办2026年“五·四”表彰暨合唱展演的通知_校园信息平台 党政办公室 发布日期：2026年04月15日 浏览次数： 2026年4月15日" [ref=e188] [cursor=pointer]:
+                - /url: https://info.bipt.edu.cn/xxxx/xxtzgg/99e88431719243daab0d517c68560ccd.htm
+                - generic [ref=e190]:
+                  - generic [ref=e191]: 关于举办2026年“五·四”表彰暨合唱展演的通知_校园信息平台
+                  - generic [ref=e192]:
+                    - generic [ref=e193]: 党政办公室 发布日期：2026年04月15日 浏览次数：
+                    - generic [ref=e194]: 2026年4月15日
+              - link "关于开展2021、2025届毕业生评价的通知_校园信息平台 教务处 发布日期：2026年04月15日 浏览次数： 2026年4月15日" [ref=e195] [cursor=pointer]:
+                - /url: https://info.bipt.edu.cn/jgjf/bctzgg/560674238be14fac97849784b0b26bb5.htm
+                - generic [ref=e197]:
+                  - generic [ref=e198]: 关于开展2021、2025届毕业生评价的通知_校园信息平台
+                  - generic [ref=e199]:
+                    - generic [ref=e200]: 教务处 发布日期：2026年04月15日 浏览次数：
+                    - generic [ref=e201]: 2026年4月15日
+              - link "关于开展2026年校级研究生教改类项目结题验收的通知_校园信息平台 研究生处 发布日期：2026年04月15日 浏览次数： 2026年4月15日" [ref=e202] [cursor=pointer]:
+                - /url: https://info.bipt.edu.cn/jgjf/bctzgg/310b509ae5914344b15cc4ff0ad4e1bc.htm
+                - generic [ref=e204]:
+                  - generic [ref=e205]: 关于开展2026年校级研究生教改类项目结题验收的通知_校园信息平台
+                  - generic [ref=e206]:
+                    - generic [ref=e207]: 研究生处 发布日期：2026年04月15日 浏览次数：
+                    - generic [ref=e208]: 2026年4月15日
+              - link "4月15日清源校区教工餐厅菜谱_校园信息平台 后勤基建处 发布日期：2026年04月14日 浏览次数： 2026年4月14日" [ref=e209] [cursor=pointer]:
+                - /url: https://info.bipt.edu.cn/fwxx/fwshfw/efa1274b7dfa4c10ba236af520ee0d72.htm
+                - generic [ref=e211]:
+                  - generic [ref=e212]: 4月15日清源校区教工餐厅菜谱_校园信息平台
+                  - generic [ref=e213]:
+                    - generic [ref=e214]: 后勤基建处 发布日期：2026年04月14日 浏览次数：
+                    - generic [ref=e215]: 2026年4月14日
+              - link "关于下拨2026年党费的通知_校园信息平台 组织部 发布日期：2026年04月14日 浏览次数： 2026年4月14日" [ref=e216] [cursor=pointer]:
+                - /url: https://info.bipt.edu.cn/xxxx/xxtzgg/477876c27b194c1dbfdcb50e9d204c06.htm
+                - generic [ref=e218]:
+                  - generic [ref=e219]: 关于下拨2026年党费的通知_校园信息平台
+                  - generic [ref=e220]:
+                    - generic [ref=e221]: 组织部 发布日期：2026年04月14日 浏览次数：
+                    - generic [ref=e222]: 2026年4月14日
+          - generic [ref=e223]:
+            - generic [ref=e225]:
+              - generic [ref=e226]:
+                - img [ref=e228]
+                - generic [ref=e230]:
+                  - text: "1100"
+                  - generic [ref=e231]: 积分
+              - generic [ref=e233]:
+                - img [ref=e235]
+                - generic [ref=e237]:
+                  - text: "18"
+                  - generic [ref=e238]: 对话
+            - generic [ref=e239]:
+              - heading "校园动态" [level=3] [ref=e241]
+              - generic [ref=e242]:
+                - link "通知公告 关于举办2026年“五·四”表彰暨合唱展演的通知_校园信息平台" [ref=e243] [cursor=pointer]:
+                  - /url: https://info.bipt.edu.cn/xxxx/xxtzgg/99e88431719243daab0d517c68560ccd.htm
+                  - generic [ref=e244]: 通知公告
+                  - generic [ref=e245]: 关于举办2026年“五·四”表彰暨合唱展演的通知_校园信息平台
+                - link "通知公告 关于开展2021、2025届毕业生评价的通知_校园信息平台" [ref=e246] [cursor=pointer]:
+                  - /url: https://info.bipt.edu.cn/jgjf/bctzgg/560674238be14fac97849784b0b26bb5.htm
+                  - generic [ref=e247]: 通知公告
+                  - generic [ref=e248]: 关于开展2021、2025届毕业生评价的通知_校园信息平台
+                - link "通知公告 关于开展2026年校级研究生教改类项目结题验收的通知_校园信息平台" [ref=e249] [cursor=pointer]:
+                  - /url: https://info.bipt.edu.cn/jgjf/bctzgg/310b509ae5914344b15cc4ff0ad4e1bc.htm
+                  - generic [ref=e250]: 通知公告
+                  - generic [ref=e251]: 关于开展2026年校级研究生教改类项目结题验收的通知_校园信息平台
+                - link "通知公告 关于下拨2026年党费的通知_校园信息平台" [ref=e252] [cursor=pointer]:
+                  - /url: https://info.bipt.edu.cn/xxxx/xxtzgg/477876c27b194c1dbfdcb50e9d204c06.htm
+                  - generic [ref=e253]: 通知公告
+                  - generic [ref=e254]: 关于下拨2026年党费的通知_校园信息平台
+    - generic [ref=e255]:
+      - textbox "输入消息" [ref=e256]:
+        - /placeholder: 输入问题，按 Enter 发送...
+      - button "发送消息" [disabled] [ref=e257]:
+        - img [ref=e258]

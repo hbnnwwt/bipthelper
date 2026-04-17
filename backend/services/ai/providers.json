@@ -1,0 +1,42 @@
+{
+  "defaultProvider": "siliconflow",
+  "providers": [
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "baseUrl": "https://api.openai.com/v1",
+      "defaultModel": "gpt-4o",
+      "apiFormat": "openai"
+    },
+    {
+      "id": "siliconflow",
+      "name": "硅基流动",
+      "baseUrl": "https://api.siliconflow.cn/v1",
+      "defaultModel": "Qwen/Qwen3-8B",
+      "apiFormat": "openai"
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic Claude",
+      "baseUrl": "https://api.anthropic.com/v1",
+      "defaultModel": "claude-sonnet-4-20250514",
+      "apiFormat": "anthropic"
+    },
+    {
+      "id": "minimax",
+      "name": "MiniMax",
+      "baseUrl": "https://api.minimaxi.com/anthropic",
+      "defaultModel": "MiniMax-M2.7",
+      "apiFormat": "anthropic"
+    },
+    {
+      "id": "modelscope",
+      "name": "ModelScope",
+      "baseUrl": "https://api-inference.modelscope.cn/v1",
+      "defaultModel": "qwen3.5-397b",
+      "apiFormat": "openai"
+    }
+  ],
+  "defaultPromptTemplate": "你是一个学校信息分类专家。根据以下文章的标题和内容，判断它属于哪个分类。\n\n可选分类：{categories}\n标题：{title}\n内容摘要：{content}\n\n请返回JSON格式，只包含categories数组，不要其他内容。\n格式：{{\"categories\": [\"分类1\", \"分类2\"]}}",
+  "defaultCategories": "通知公告,规章制度,部门文件,工作动态,学术活动,招标信息,人事信息,财务信息,后勤保障,校园活动"
+}

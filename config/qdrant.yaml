@@ -1,0 +1,7 @@
+service:
+  http_port: 6333
+  host: 127.0.0.1
+  grpc_port: 0  # 禁用 gRPC，Windows 上 gRPC 传输层不稳定
+
+storage:
+  storage_path: E:/code/bipthelper/data/qdrant

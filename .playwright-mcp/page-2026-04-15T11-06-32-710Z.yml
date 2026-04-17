@@ -1,0 +1,106 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link "搜索" [ref=e7] [cursor=pointer]:
+          - /url: /search
+          - img [ref=e8]
+        - generic [ref=e11]: 对话
+      - button "新建会话" [ref=e12] [cursor=pointer]:
+        - img [ref=e13]
+    - listbox "会话列表" [ref=e14]:
+      - option "新对话 删除会话 新对话" [ref=e110] [cursor=pointer]:
+        - generic [ref=e111]: 新对话
+        - button "删除会话 新对话" [ref=e112]:
+          - img [ref=e113]
+      - option "新对话 删除会话 新对话" [ref=e116] [cursor=pointer]:
+        - generic [ref=e117]: 新对话
+        - button "删除会话 新对话" [ref=e118]:
+          - img [ref=e119]
+      - option "4月以来哪个菜被提供最多，哪些天提供了这个菜 删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: 4月以来哪个菜被提供最多，哪些天提供了这个菜
+        - button "删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e17]:
+          - img [ref=e18]
+      - option "4月以来哪个菜被提供最多 删除会话 4月以来哪个菜被提供最多" [selected] [ref=e237] [cursor=pointer]:
+        - generic [ref=e22]: 4月以来哪个菜被提供最多
+        - button "删除会话 4月以来哪个菜被提供最多" [ref=e238]:
+          - img [ref=e24]
+      - option "4月以来哪个菜被提供最多，哪些天提供了这个菜 删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: 4月以来哪个菜被提供最多，哪些天提供了这个菜
+        - button "删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e29]:
+          - img [ref=e30]
+      - option "test 删除会话 test" [ref=e33] [cursor=pointer]:
+        - generic [ref=e34]: test
+        - button "删除会话 test" [ref=e35]:
+          - img [ref=e36]
+      - option "国家奖学金每年有多少人得奖 删除会话 国家奖学金每年有多少人得奖" [ref=e39] [cursor=pointer]:
+        - generic [ref=e40]: 国家奖学金每年有多少人得奖
+        - button "删除会话 国家奖学金每年有多少人得奖" [ref=e41]:
+          - img [ref=e42]
+      - option "test 删除会话 test" [ref=e45] [cursor=pointer]:
+        - generic [ref=e46]: test
+        - button "删除会话 test" [ref=e47]:
+          - img [ref=e48]
+      - option "新对话 删除会话 新对话" [ref=e51] [cursor=pointer]:
+        - generic [ref=e52]: 新对话
+        - button "删除会话 新对话" [ref=e53]:
+          - img [ref=e54]
+      - option "4月以来哪个菜被提供最多 删除会话 4月以来哪个菜被提供最多" [ref=e57] [cursor=pointer]:
+        - generic [ref=e58]: 4月以来哪个菜被提供最多
+        - button "删除会话 4月以来哪个菜被提供最多" [ref=e59]:
+          - img [ref=e60]
+      - option "新对话 删除会话 新对话" [ref=e63] [cursor=pointer]:
+        - generic [ref=e64]: 新对话
+        - button "删除会话 新对话" [ref=e65]:
+          - img [ref=e66]
+      - option "新对话 删除会话 新对话" [ref=e69] [cursor=pointer]:
+        - generic [ref=e70]: 新对话
+        - button "删除会话 新对话" [ref=e71]:
+          - img [ref=e72]
+      - option "4月以来哪个菜被提供最多 删除会话 4月以来哪个菜被提供最多" [ref=e75] [cursor=pointer]:
+        - generic [ref=e76]: 4月以来哪个菜被提供最多
+        - button "删除会话 4月以来哪个菜被提供最多" [ref=e77]:
+          - img [ref=e78]
+      - option "新对话 删除会话 新对话" [ref=e81] [cursor=pointer]:
+        - generic [ref=e82]: 新对话
+        - button "删除会话 新对话" [ref=e83]:
+          - img [ref=e84]
+    - generic [ref=e87]:
+      - link "A admin 1103 积分" [ref=e88] [cursor=pointer]:
+        - /url: /profile
+        - generic [ref=e90]: A
+        - generic [ref=e91]:
+          - generic [ref=e92]: admin
+          - generic [ref=e93]: 1103 积分
+      - link "管理后台" [ref=e94] [cursor=pointer]:
+        - /url: /admin
+        - img [ref=e95]
+      - button "退出登录" [ref=e98] [cursor=pointer]:
+        - img [ref=e99]
+  - main [ref=e102]:
+    - log "对话消息" [ref=e103]:
+      - generic [ref=e239]:
+        - img [ref=e241]
+        - paragraph [ref=e245]: 4月以来哪个菜被提供最多
+      - generic [ref=e246]:
+        - img [ref=e248]
+        - generic [ref=e251]:
+          - generic [ref=e252]:
+            - generic [ref=e253]:
+              - generic [ref=e256]: 提取关键词
+              - generic [ref=e257]: 4月以来哪个菜被提供最多
+              - generic [ref=e258]: 0s
+            - generic [ref=e259]:
+              - generic [ref=e262]: 检索文档
+              - generic [ref=e263]: 0 条文档
+              - generic [ref=e264]: 0s
+            - generic [ref=e265]:
+              - generic [ref=e268]: 生成回答
+              - generic [ref=e269]: 0.01s
+          - paragraph [ref=e270]: 「白米饭」出现次数最多，共 20 次，提供的日期有：2026-04-01, 2026-04-02, 2026-04-03, 2026-04-07, 2026-04-08 等11天
+          - generic [ref=e271]: 总耗时 1.09s
+    - generic [ref=e231]:
+      - textbox "输入消息" [ref=e232]:
+        - /placeholder: 输入问题，按 Enter 发送...
+      - button "发送消息" [disabled] [ref=e233]:
+        - img [ref=e234]

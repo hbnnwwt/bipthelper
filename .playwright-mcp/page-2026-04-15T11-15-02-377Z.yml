@@ -1,0 +1,114 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link "搜索" [ref=e7] [cursor=pointer]:
+          - /url: /search
+          - img [ref=e8]
+        - generic [ref=e11]: 对话
+      - button "新建会话" [ref=e12] [cursor=pointer]:
+        - img [ref=e13]
+    - listbox "会话列表" [ref=e14]:
+      - option "3月份以来，哪个菜品被供应的最多 删除会话 3月份以来，哪个菜品被供应的最多" [selected] [ref=e249] [cursor=pointer]:
+        - generic [ref=e39]: 3月份以来，哪个菜品被供应的最多
+        - button "删除会话 3月份以来，哪个菜品被供应的最多" [ref=e250]:
+          - img [ref=e41]
+      - option "新对话 删除会话 新对话" [ref=e44] [cursor=pointer]:
+        - generic [ref=e45]: 新对话
+        - button "删除会话 新对话" [ref=e46]:
+          - img [ref=e47]
+      - option "4月以来哪个菜被提供最多 删除会话 4月以来哪个菜被提供最多" [ref=e50] [cursor=pointer]:
+        - generic [ref=e51]: 4月以来哪个菜被提供最多
+        - button "删除会话 4月以来哪个菜被提供最多" [ref=e52]:
+          - img [ref=e53]
+      - option "新对话 删除会话 新对话" [ref=e56] [cursor=pointer]:
+        - generic [ref=e57]: 新对话
+        - button "删除会话 新对话" [ref=e58]:
+          - img [ref=e59]
+      - option "新对话 删除会话 新对话" [ref=e62] [cursor=pointer]:
+        - generic [ref=e63]: 新对话
+        - button "删除会话 新对话" [ref=e64]:
+          - img [ref=e65]
+      - option "4月以来哪个菜被提供最多，哪些天提供了这个菜 删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e68] [cursor=pointer]:
+        - generic [ref=e69]: 4月以来哪个菜被提供最多，哪些天提供了这个菜
+        - button "删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e70]:
+          - img [ref=e71]
+      - option "4月以来哪个菜被提供最多，哪些天提供了这个菜 删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e74] [cursor=pointer]:
+        - generic [ref=e75]: 4月以来哪个菜被提供最多，哪些天提供了这个菜
+        - button "删除会话 4月以来哪个菜被提供最多，哪些天提供了这个菜" [ref=e76]:
+          - img [ref=e77]
+      - option "test 删除会话 test" [ref=e80] [cursor=pointer]:
+        - generic [ref=e81]: test
+        - button "删除会话 test" [ref=e82]:
+          - img [ref=e83]
+      - option "国家奖学金每年有多少人得奖 删除会话 国家奖学金每年有多少人得奖" [ref=e86] [cursor=pointer]:
+        - generic [ref=e87]: 国家奖学金每年有多少人得奖
+        - button "删除会话 国家奖学金每年有多少人得奖" [ref=e88]:
+          - img [ref=e89]
+      - option "test 删除会话 test" [ref=e92] [cursor=pointer]:
+        - generic [ref=e93]: test
+        - button "删除会话 test" [ref=e94]:
+          - img [ref=e95]
+      - option "新对话 删除会话 新对话" [ref=e98] [cursor=pointer]:
+        - generic [ref=e99]: 新对话
+        - button "删除会话 新对话" [ref=e100]:
+          - img [ref=e101]
+      - option "4月以来哪个菜被提供最多 删除会话 4月以来哪个菜被提供最多" [ref=e104] [cursor=pointer]:
+        - generic [ref=e105]: 4月以来哪个菜被提供最多
+        - button "删除会话 4月以来哪个菜被提供最多" [ref=e106]:
+          - img [ref=e107]
+      - option "新对话 删除会话 新对话" [ref=e110] [cursor=pointer]:
+        - generic [ref=e111]: 新对话
+        - button "删除会话 新对话" [ref=e112]:
+          - img [ref=e113]
+      - option "新对话 删除会话 新对话" [ref=e116] [cursor=pointer]:
+        - generic [ref=e117]: 新对话
+        - button "删除会话 新对话" [ref=e118]:
+          - img [ref=e119]
+      - option "4月以来哪个菜被提供最多 删除会话 4月以来哪个菜被提供最多" [ref=e122] [cursor=pointer]:
+        - generic [ref=e123]: 4月以来哪个菜被提供最多
+        - button "删除会话 4月以来哪个菜被提供最多" [ref=e124]:
+          - img [ref=e125]
+      - option "新对话 删除会话 新对话" [ref=e128] [cursor=pointer]:
+        - generic [ref=e129]: 新对话
+        - button "删除会话 新对话" [ref=e130]:
+          - img [ref=e131]
+    - generic [ref=e15]:
+      - link "A admin 1101 积分" [ref=e16] [cursor=pointer]:
+        - /url: /profile
+        - generic [ref=e18]: A
+        - generic [ref=e19]:
+          - generic [ref=e20]: admin
+          - generic [ref=e21]: 1101 积分
+      - link "管理后台" [ref=e22] [cursor=pointer]:
+        - /url: /admin
+        - img [ref=e23]
+      - button "退出登录" [ref=e26] [cursor=pointer]:
+        - img [ref=e27]
+  - main [ref=e30]:
+    - log "对话消息" [ref=e31]:
+      - generic [ref=e251]:
+        - img [ref=e253]
+        - paragraph [ref=e257]: 3月份以来，哪个菜品被供应的最多
+      - generic [ref=e258]:
+        - img [ref=e260]
+        - generic [ref=e263]:
+          - generic [ref=e264]:
+            - generic [ref=e265]:
+              - generic [ref=e268]: 提取关键词
+              - generic [ref=e269]: 菜品、供应、月份
+              - generic [ref=e270]: 0s
+            - generic [ref=e271]:
+              - generic [ref=e274]: 检索文档
+              - generic [ref=e275]: 0 条文档
+              - generic [ref=e276]: 0s
+            - generic [ref=e277]:
+              - generic [ref=e280]: 生成回答
+              - generic [ref=e281]: 0.01s
+          - paragraph [ref=e282]: 「手撕包菜」出现次数最多，共 7 次，提供的日期有：2026-03-17, 2026-03-19, 2026-03-24, 2026-03-27, 2026-04-02 等7天
+          - generic [ref=e283]: 总耗时 1s
+    - generic [ref=e243]:
+      - textbox "输入消息" [ref=e244]:
+        - /placeholder: 输入问题，按 Enter 发送...
+      - button "发送消息" [disabled] [ref=e245]:
+        - img [ref=e246]

@@ -1,0 +1,146 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]: 今天是：2026年04月06日 星期一
+      - generic [ref=e5]: 本周为教学第 6 周
+      - generic [ref=e7] [cursor=pointer]: 
+      - text:       
+    - link [ref=e11] [cursor=pointer]:
+      - /url: ../../index.htm
+      - img [ref=e12]
+  - article [ref=e14]:
+    - generic [ref=e15]:
+      - complementary [ref=e16]:
+        - heading "机关教辅" [level=2] [ref=e18]
+        - generic [ref=e19]:
+          - link "通知公告" [ref=e21] [cursor=pointer]:
+            - /url: index.htm
+          - link "部门文件" [ref=e23] [cursor=pointer]:
+            - /url: ../bcbmwj/index.htm
+          - link "工作动态" [ref=e25] [cursor=pointer]:
+            - /url: ../bcgzdt/index.htm
+      - complementary [ref=e26]:
+        - generic [ref=e29]:
+          - text: 当前位置：
+          - link "首页" [ref=e30] [cursor=pointer]:
+            - /url: ../../index.htm
+          - text: "> 通知公告"
+        - list [ref=e31]:
+          - listitem [ref=e32]:
+            - generic [ref=e33]: 2026-03-25
+            - link "关于组织开展“学生资助宣传大使”遴选暨“助学 筑梦 铸人”主题征文活动的通知" [ref=e34] [cursor=pointer]:
+              - /url: d6be18f7792940b0859f08d100cbba54.htm
+          - listitem [ref=e35]:
+            - generic [ref=e36]: 2026-03-25
+            - link "关于“助学圆梦·时代新人说”演讲比赛暨“学生资助宣传大使”遴选报名的通知" [ref=e37] [cursor=pointer]:
+              - /url: 3583d57208a343d29e819146e9a157ee.htm
+          - listitem [ref=e38]:
+            - generic [ref=e39]: 2026-03-25
+            - link "关于开展大学生创新创业训练URT计划项目结题验收工作的通知" [ref=e40] [cursor=pointer]:
+              - /url: 1b46874c646744f1b99d0a19da08b57b.htm
+          - listitem [ref=e41]:
+            - generic [ref=e42]: 2026-03-24
+            - link "关于开展学校2025年度预算执行和决算草案审计及内部控制评价工作的通知" [ref=e43] [cursor=pointer]:
+              - /url: 643fb091649c4695a2ce90554300da38.htm
+          - listitem [ref=e44]:
+            - generic [ref=e45]: 2026-03-24
+            - link "关于办理2025年度个人汇算清缴的工作" [ref=e46] [cursor=pointer]:
+              - /url: d5890a76dc65438794263f6303116ee2.htm
+          - listitem [ref=e47]:
+            - generic [ref=e48]: 2026-03-23
+            - link "房山校区2025-2026学年春季学期第4周会议和活动安排" [ref=e49] [cursor=pointer]:
+              - /url: 8f435a58bf654cbcae587646e02e63ab.htm
+          - listitem [ref=e50]:
+            - generic [ref=e51]: 2026-03-23
+            - link "转发《关于开展2026年度教育部产学合作协同育人项目结题验收工作的通知》" [ref=e52] [cursor=pointer]:
+              - /url: c33861cce3394f0086ed601b3740fafb.htm
+          - listitem [ref=e53]:
+            - generic [ref=e54]: 2026-03-20
+            - link "关于3月23日起增开清源与房山校区校车（试运行）的通知" [ref=e55] [cursor=pointer]:
+              - /url: b310f8bca32e46f9b683a38a65864a6f.htm
+          - listitem [ref=e56]:
+            - generic [ref=e57]: 2026-03-20
+            - link "离退休党委召开2025年度党支部书记述职评议会" [ref=e58] [cursor=pointer]:
+              - /url: d95a2eb484514026ac7d43a6e6758b8f.htm
+          - listitem [ref=e59]:
+            - generic [ref=e60]: 2026-03-19
+            - link "关于开展北京市教育科学“十五五”规划2026年度课题申报工作的通知" [ref=e61] [cursor=pointer]:
+              - /url: 917d8ea1e6f745cc8fa3936a15abb059.htm
+          - listitem [ref=e62]:
+            - generic [ref=e63]: 2026-03-19
+            - link "关于组织申报中国教育发展战略学会 2026 年研究课题的通知" [ref=e64] [cursor=pointer]:
+              - /url: 680bba18a7b24b0f8db59211f95f20c1.htm
+          - listitem [ref=e65]:
+            - generic [ref=e66]: 2026-03-19
+            - link "关于做好2026年度管理岗位教职工网络学习全覆盖工作的通知" [ref=e67] [cursor=pointer]:
+              - /url: e86744b6f03845ecba259d7b90df1dca.htm
+          - listitem [ref=e68]:
+            - generic [ref=e69]: 2026-03-18
+            - link "关于做好北京地区2026届毕业生一次性求职补贴补充申报工作的通知" [ref=e70] [cursor=pointer]:
+              - /url: da751c7672f44758bf63c1edeff53ee7.htm
+          - listitem [ref=e71]:
+            - generic [ref=e72]: 2026-03-18
+            - link "关于图书馆招聘学生馆员的通知" [ref=e73] [cursor=pointer]:
+              - /url: b77b5209f56b412da830263fd668db50.htm
+          - listitem [ref=e74]:
+            - generic [ref=e75]: 2026-03-18
+            - link "2026年春季学期三助一辅选聘结果公告" [ref=e76] [cursor=pointer]:
+              - /url: b98b2b21e8834a5ea3cbf8c688d960c0.htm
+          - listitem [ref=e77]:
+            - generic [ref=e78]: 2026-03-18
+            - link "关于申报2026年度重要科研成果培育项目的通知" [ref=e79] [cursor=pointer]:
+              - /url: b10053c1e3a646749949b6be94c2795e.htm
+          - listitem [ref=e80]:
+            - generic [ref=e81]: 2026-03-17
+            - link "关于举办AI驱动的高校教师数字素养能力提升高级研修班的通知" [ref=e82] [cursor=pointer]:
+              - /url: 433a98336a7a423280b3ad1bb20caa7c.htm
+          - listitem [ref=e83]:
+            - generic [ref=e84]: 2026-03-17
+            - link "关于举办第三届校级教师教学创新大赛决赛的通知" [ref=e85] [cursor=pointer]:
+              - /url: b5ae9c5b51d4488585178249e71852dc.htm
+          - listitem [ref=e86]:
+            - generic [ref=e87]: 2026-03-17
+            - link "关于培育建设校企联合研发机构的通知" [ref=e88] [cursor=pointer]:
+              - /url: 8197baca846d4c878a03cb71d98f64aa.htm
+          - listitem [ref=e89]:
+            - generic [ref=e90]: 2026-03-17
+            - link "关于2026年学术著作出版资助项目申报通知" [ref=e91] [cursor=pointer]:
+              - /url: c7e0914de41d4f73ba8d577067671cc6.htm
+        - generic [ref=e93]:
+          - text: 页数：2/367总数：7327
+          - link [ref=e94] [cursor=pointer]:
+            - /url: index.htm
+            - img [ref=e95]
+          - link "1" [ref=e96] [cursor=pointer]:
+            - /url: index.htm
+          - link "2" [ref=e97] [cursor=pointer]:
+            - /url: index1.htm
+          - link "3" [ref=e98] [cursor=pointer]:
+            - /url: index2.htm
+          - link "4" [ref=e99] [cursor=pointer]:
+            - /url: index3.htm
+          - link "5" [ref=e100] [cursor=pointer]:
+            - /url: index4.htm
+          - link [ref=e101] [cursor=pointer]:
+            - /url: index2.htm
+            - img [ref=e102]
+          - link [ref=e103] [cursor=pointer]:
+            - /url: index5.htm
+            - img [ref=e104]
+  - article [ref=e105]:
+    - generic [ref=e106]:
+      - link [ref=e108] [cursor=pointer]:
+        - /url: ../../index.htm
+      - paragraph [ref=e109]:
+        - generic [ref=e110]: 版权所有：北京石油化工学院（ 2026）
+        - generic [ref=e111]: 地址：北京市大兴区清源北路19号 邮编：102617
+        - generic [ref=e112]: 技术支持：北京石油化工学院
+      - generic [ref=e113]:
+        - img [ref=e114]
+        - paragraph [ref=e115]:
+          - text: 欢迎扫码关注
+          - text: 北石化信息门户
+  - link " TOP" [ref=e116] [cursor=pointer]:
+    - /url: "#"
+    - generic [ref=e117]: 
+    - text: TOP

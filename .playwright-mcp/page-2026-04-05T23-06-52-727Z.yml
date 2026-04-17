@@ -1,0 +1,80 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]: 今天是：2026年04月06日 星期一
+      - generic [ref=e5]: 本周为教学第 6 周
+      - generic [ref=e7] [cursor=pointer]: 
+      - text:       
+    - link [ref=e11] [cursor=pointer]:
+      - /url: ../../index.htm
+      - img [ref=e12]
+  - article [ref=e13]:
+    - generic [ref=e14]:
+      - complementary [ref=e15]:
+        - generic [ref=e17]: 发布单位：国实处 发布日期：2026年04月03日 浏览次数： 168
+        - generic [ref=e20]:
+          - paragraph [ref=e21]:
+            - img [ref=e22]
+          - paragraph [ref=e23]: 关于开展2026年固定资产清查工作的通知
+          - paragraph [ref=e24]: 各单位，各部门：
+          - paragraph [ref=e25]: 为摸清在账资产状况，完善在账资产信息，确保资产系统信息更新及时准确，切实做到账账相符，账实相符,学校将于2026年4月开展个人名下固定资产清查工作。现将有关事宜通知如下。
+          - paragraph [ref=e26]: 一、清查范围
+          - paragraph [ref=e27]: 2026年3月31日前登记在账的个人名下高值固定资产。
+          - paragraph [ref=e28]: 二、清查方式
+          - paragraph [ref=e29]: 此次清查由国有资产与实验室管理处从资产管理系统导出个人资产明细，反馈给各单位资产业务员。由各业务员组织本单位资产清查，并将个人签字确认后的清查明细纸质版以及本单位资产清查汇总统计表（需签字盖章）交到国实处。
+          - paragraph [ref=e30]: 本人发现账实不符或对名下资产有异议的，请及时与本单位资产管理业务员联系，由业务员统一汇总反馈出现的问题。
+          - paragraph [ref=e31]:
+            - text: 本单位全部资产清查完毕后，由资产管理业务员填写打印资产清查汇总表，经单位主管领导签字并加盖公章后交国实处。国实处根据清查反馈结果，及时处理
+            - generic [ref=e32]: 发现
+            - text: 的问题。
+          - paragraph [ref=e33]: 四、时间安排
+          - paragraph [ref=e34]: （一）4月3日-4月21日，教职工对名下资产进行清查。
+          - paragraph [ref=e35]: （二）4月22日下班前，各单位将资产清查汇总表及相关材料提交国有资产与实验室管理处。
+          - paragraph [ref=e36]: （三）4月23日-4月30日，国有资产与实验室管理处集中解决清查中发现的问题。
+          - paragraph [ref=e37]: （四）5月6日-5月8日，国有资产与实验室管理处组织各学院的设备抽查。
+          - paragraph [ref=e38]:
+            - generic [ref=e39]: 五、工作要求
+          - paragraph [ref=e40]: 请各单位高度重视并组织好资产清查工作，督促教职工对个人名下资产进行认真核查。资产管理业务员负责本单位资产清查的具体工作，若在清查过程中发现未及时上账或转交接的资产，请尽快办理相关手续。
+          - paragraph [ref=e41]: 清查重点查看本人账面资产是否准确，实物资产是否有盈亏，设备运行是否完好，资产标签是否粘贴完好，资产存放地点和使用人是否发生变更等。
+          - paragraph [ref=e42]: 六、特别提醒
+          - paragraph [ref=e43]: 1.各单位若有存放在校外的设备，一定要组织进行现场清查，并拍照（要有资产标签）反馈设备情况。如果设备存放地点或负责人发生变化要及时联系国实处进行变更。
+          - paragraph [ref=e44]: 2.国实处在各单位清查结束后将组织对各单位资产的现场抽查。其中，校外存放设备是抽查重点。抽查结果将作为后期对各单位进行考核的重要依据。
+          - paragraph [ref=e45]: 3.由于房山校区资产暂未并入到学校资产系统，因此由房山校区自行组织清查盘点。
+          - paragraph [ref=e46]
+          - paragraph [ref=e47]
+          - paragraph [ref=e48]
+          - paragraph [ref=e49]
+          - paragraph [ref=e50]: 联系人：李津 联系电话：81292072
+          - paragraph [ref=e51]: 附件：资产清查汇总表
+          - paragraph [ref=e52]
+          - paragraph [ref=e53]
+          - paragraph [ref=e54]: 国有资产与实验室管理处
+          - paragraph [ref=e55]: 2026年4月3日
+        - generic [ref=e56]:
+          - heading "相关附件" [level=2] [ref=e58]
+          - list [ref=e59]:
+            - listitem [ref=e60]:
+              - link "附件 资产清查汇总表.xlsx" [ref=e61] [cursor=pointer]:
+                - /url: http://info.bipt.edu.cn/pub/xnzcc/docs//2026-04/d5a5b83bbbca4b71aac3e7118914e9c8.xlsx
+      - generic [ref=e62]:
+        - link "保存信息" [ref=e63] [cursor=pointer]:
+          - /url: /cms/front/downWord?articleID=08d92b3c3e8f491e8e060ade07316948
+        - link "关闭窗口" [ref=e64] [cursor=pointer]:
+          - /url: javascript:window.opener=null;window.open('','_self');window.close();
+  - article [ref=e65]:
+    - generic [ref=e66]:
+      - link [ref=e68] [cursor=pointer]:
+        - /url: ../../index.htm
+      - paragraph [ref=e69]:
+        - generic [ref=e70]: 版权所有：北京石油化工学院（ 2026）
+        - generic [ref=e71]: 地址：北京市大兴区清源北路19号 邮编：102617
+        - generic [ref=e72]: 技术支持：北京石油化工学院
+      - generic [ref=e73]:
+        - img [ref=e74]
+        - paragraph [ref=e75]:
+          - text: 欢迎扫码关注
+          - text: 北石化信息门户
+  - link " TOP" [ref=e76] [cursor=pointer]:
+    - /url: "#"
+    - generic [ref=e77]: 
+    - text: TOP
