@@ -767,6 +767,7 @@ def crawl_all(session=None):
         return True
     finally:
         with _crawl_lock:
+            global crawl_progress
             crawl_running = False
             crawl_stop_requested = False
             crawl_progress = {
@@ -804,6 +805,7 @@ def _crawl_all_impl(session: Session):
     for i, config in enumerate(db_configs):
         if crawl_stop_requested:
             crawl_progress["phase"] = "stopping"
+            crawl_progress["configs"][i]["status"] = "stopped"
             logger.info("Crawl stopped by user (between configs)")
             break
         crawl_progress["phase"] = "running"
@@ -836,6 +838,7 @@ def crawl_configs(config_ids: list[str], session=None):
         return True
     finally:
         with _crawl_lock:
+            global crawl_progress
             crawl_running = False
             crawl_stop_requested = False
             crawl_progress = {
@@ -1061,6 +1064,7 @@ def _crawl_configs_impl(session: Session, config_ids: list[str]):
     for i, config in enumerate(db_configs):
         if crawl_stop_requested:
             crawl_progress["phase"] = "stopping"
+            crawl_progress["configs"][i]["status"] = "stopped"
             logger.info("Crawl stopped by user (between configs)")
             break
         crawl_progress["phase"] = "running"
