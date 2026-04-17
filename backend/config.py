@@ -55,8 +55,8 @@ class Settings(BaseSettings):
                     f.write(f"SECRET_KEY={self.SECRET_KEY}\n")
             except OSError:
                 pass
-            print(f"SECRET_KEY not configured. Generated and saved to .env:")
-            print(f"SECRET_KEY={self.SECRET_KEY}")
+            # print(f"SECRET_KEY not configured. Generated and saved to .env:")
+            # print(f"SECRET_KEY={self.SECRET_KEY}")
 
 @lru_cache
 def get_settings():
