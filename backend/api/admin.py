@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 from sqlmodel import Session, select, func
 from datetime import datetime, timezone, timedelta
+from urllib.parse import urlparse
 import secrets
 
 from database import get_session
@@ -186,6 +187,27 @@ def list_configs(
         logger.error(f"Failed to list configs: {e}")
         raise HTTPException(status_code=500, detail=f"获取配置列表失败: {str(e)}")
 
+def _validate_selector(selector: str, field_name: str) -> bool:
+    """验证 CSS 选择器不包含危险内容"""
+    if not selector or not selector.strip():
+        return True  # 空值跳过
+    dangerous = ["<script", "javascript:", "onerror", "onclick", "onload", "onmouse", "onkey"]
+    lower = selector.lower()
+    for d in dangerous:
+        if d in lower:
+            raise HTTPException(status_code=400, detail=f"{field_name}: 选择器不能包含危险内容 '{d}'")
+    return True
+
+def _validate_url(url: str, field_name: str) -> bool:
+    """验证 URL 格式"""
+    try:
+        u = urlparse(url)
+        if u.scheme not in ("http", "https", ""):  # 空 scheme 允许（相对 URL）
+            raise HTTPException(status_code=400, detail=f"{field_name}: 仅支持 http/https URL")
+        return True
+    except Exception:
+        raise HTTPException(status_code=400, detail=f"{field_name}: URL 格式无效")
+
 @router.post("/configs")
 def create_config(
     name: str,
@@ -204,6 +226,13 @@ def create_config(
     session: Session = Depends(get_session),
 ):
     """添加爬虫配置"""
+    _validate_url(url, "列表页URL")
+    _validate_selector(selector, "内容选择器")
+    _validate_selector(article_selector, "文章链接选择器")
+    if link_prefix:
+        _validate_selector(link_prefix, "链接前缀")
+    if pagination_selector:
+        _validate_selector(pagination_selector, "分页选择器")
     config = add_crawl_config(
         name, url, selector, category, session,
         is_list_page=is_list_page,
@@ -242,6 +271,17 @@ def update_config(
     config = session.get(CrawlConfig, config_id)
     if not config:
         raise HTTPException(status_code=404, detail="Config not found")
+
+    if url is not None:
+        _validate_url(url, "列表页URL")
+    if selector is not None:
+        _validate_selector(selector, "内容选择器")
+    if article_selector is not None:
+        _validate_selector(article_selector, "文章链接选择器")
+    if link_prefix is not None:
+        _validate_selector(link_prefix, "链接前缀")
+    if pagination_selector is not None:
+        _validate_selector(pagination_selector, "分页选择器")
 
     if name is not None:
         config.name = name

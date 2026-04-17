@@ -366,7 +366,9 @@ def extract_article_links(html: str, base_url: str, article_selector: str, link_
         href = a.get("href", "")
         if href and not href.startswith(("#", "javascript:", "mailto:")):
             full_url = resolve_url(href, base_url, link_prefix)
-            links.append(full_url)
+            # 只接受 http/https URL，防止链式攻击
+            if full_url and full_url.startswith(("http://", "https://")):
+                links.append(full_url)
 
     # 去重并保持顺序
     seen = set()
