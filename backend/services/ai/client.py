@@ -22,11 +22,11 @@ def get_provider_config(provider_id: str) -> Optional[dict]:
     返回包含 apiKey 的完整配置对象。
     """
     from models.ai_provider import AIProvider
-    from database import engine
+    from database import key_engine
     from sqlmodel import Session
 
     # 从 DB 查找
-    with Session(engine) as session:
+    with Session(key_engine) as session:
         provider = session.get(AIProvider, provider_id)
         if provider:
             from services.encryption import decrypt_value
@@ -68,11 +68,11 @@ def get_provider_config(provider_id: str) -> Optional[dict]:
 def get_default_provider() -> Optional[dict]:
     """获取默认 Provider 配置"""
     from models.ai_provider import AIProvider
-    from database import engine
+    from database import key_engine
     from sqlmodel import Session, select
 
     # 从 DB 找 is_default
-    with Session(engine) as session:
+    with Session(key_engine) as session:
         provider = session.exec(
             select(AIProvider).where(AIProvider.is_default == True)
         ).first()
