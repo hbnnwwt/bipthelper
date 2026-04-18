@@ -877,10 +877,10 @@ def _crawl_configs_impl(session: Session, config_ids: list[str]):
             crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
             # 设置当前 config 状态为 running
             crawl_progress["configs"][i]["status"] = "running"
-        new_count = crawl_list_page(config, session)
-        # 设置当前 config 状态为 done
+        result = crawl_list_page(config, session)
+        # 根据 result.stopped 决定状态
         with _progress_lock:
-            crawl_progress["configs"][i]["status"] = "done"
+            crawl_progress["configs"][i]["status"] = "stopped" if result.stopped else "done"
 
 def add_crawl_config(name: str, url: str, selector: str, category: str, session: Session,
                      is_list_page: bool = True, article_selector: str = "a",
