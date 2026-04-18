@@ -152,6 +152,29 @@ def reset_crawl_state():
             "articles_total": 0,
         }
 
+def _update_progress(page: int = None, total_pages: int = None,
+                      articles_crawled: int = None, articles_total: int = None):
+    """更新 crawl_progress 顶层字段（线程安全）"""
+    with _progress_lock:
+        if page is not None:
+            crawl_progress["page"] = page
+        if total_pages is not None:
+            crawl_progress["total_pages"] = total_pages
+        if articles_crawled is not None:
+            crawl_progress["articles_crawled"] = articles_crawled
+        if articles_total is not None:
+            crawl_progress["articles_total"] = articles_total
+        idx = crawl_progress["config_index"] - 1
+        if idx >= 0 and idx < len(crawl_progress["configs"]):
+            if page is not None:
+                crawl_progress["configs"][idx]["page"] = page
+            if total_pages is not None:
+                crawl_progress["configs"][idx]["total_pages"] = total_pages
+            if articles_total is not None:
+                crawl_progress["configs"][idx]["articles_total"] = articles_total
+            if articles_crawled is not None:
+                crawl_progress["configs"][idx]["articles_crawled"] = articles_crawled
+
 HTMLS_DIR = Path(settings.HTMLS_DIR)
 HTMLS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -581,13 +604,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
             break
         visited_pages.add(page_url)
         page_count += 1
-        crawl_progress["page"] = page_count
-        crawl_progress["total_pages"] = total_pages
-        crawl_progress["articles_total"] = total_articles
-        # 同步到 configs 明细
-        idx = crawl_progress["config_index"] - 1
-        if idx >= 0 and idx < len(crawl_progress["configs"]):
-            crawl_progress["configs"][idx]["page"] = page_count
+        _update_progress(page=page_count, total_pages=total_pages, articles_total=total_articles)
         # 第一页不延时，之后翻页前延时
         if page_count > 1:
             time.sleep(_crawl_delay(settings.CRAWL_DELAY_SECONDS))
@@ -603,13 +620,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
             if page_count == 1:
                 total_pages = extract_total_pages(html)
                 total_articles = extract_total_articles(html)
-                crawl_progress["total_pages"] = total_pages
-                crawl_progress["articles_total"] = total_articles
-                # 同步到 configs 明细
-                idx = crawl_progress["config_index"] - 1
-                if idx >= 0 and idx < len(crawl_progress["configs"]):
-                    crawl_progress["configs"][idx]["total_pages"] = total_pages
-                    crawl_progress["configs"][idx]["articles_total"] = total_articles
+                _update_progress(total_pages=total_pages, articles_total=total_articles)
                 logger.info(f"Parsed total pages: {total_pages}, total articles: {total_articles}")
 
             # 提取文章链接
@@ -630,11 +641,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
                     if crawl_article(article_url, config, session):
                         new_count += 1
                     articles_crawled_count += 1
-                    crawl_progress["articles_crawled"] = articles_crawled_count
-                    # 同步到 configs 明细
-                    idx = crawl_progress["config_index"] - 1
-                    if idx >= 0 and idx < len(crawl_progress["configs"]):
-                        crawl_progress["configs"][idx]["articles_crawled"] = articles_crawled_count
+                    _update_progress(articles_crawled=articles_crawled_count)
                     visited_articles.add(article_url)
                 elif is_incremental:
                     logger.info(f"Skipping already crawled: {article_url}")
@@ -665,13 +672,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
                     if page_count == 1:
                         total_pages = extract_total_pages(html)
                         total_articles = extract_total_articles(html)
-                        crawl_progress["total_pages"] = total_pages
-                        crawl_progress["articles_total"] = total_articles
-                        # 同步到 configs 明细
-                        idx = crawl_progress["config_index"] - 1
-                        if idx >= 0 and idx < len(crawl_progress["configs"]):
-                            crawl_progress["configs"][idx]["total_pages"] = total_pages
-                            crawl_progress["configs"][idx]["articles_total"] = total_articles
+                        _update_progress(total_pages=total_pages, articles_total=total_articles)
 
                     article_links = extract_article_links(html, page_url, config.article_selector, config.link_prefix)
                     logger.info(f"Retry success: found {len(article_links)} article links on page {page_count}")
@@ -684,11 +685,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
                             if crawl_article(article_url, config, session):
                                 new_count += 1
                             articles_crawled_count += 1
-                            crawl_progress["articles_crawled"] = articles_crawled_count
-                            # 同步到 configs 明细
-                            idx = crawl_progress["config_index"] - 1
-                            if idx >= 0 and idx < len(crawl_progress["configs"]):
-                                crawl_progress["configs"][idx]["articles_crawled"] = articles_crawled_count
+                            _update_progress(articles_crawled=articles_crawled_count)
                             visited_articles.add(article_url)
 
                     if config.pagination_selector:
