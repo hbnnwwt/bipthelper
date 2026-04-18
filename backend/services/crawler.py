@@ -462,6 +462,14 @@ def extract_total_articles(html: str) -> int:
     logger.warning(f"[extract] total_articles: no pattern matched in HTML")
     return 0
 
+def _fetch_list_page(page_url: str) -> str:
+    """请求列表页，返回 HTML 内容"""
+    with httpx.Client(timeout=30.0, follow_redirects=True,
+                      headers={"User-Agent": _random_ua()}) as client:
+        response = client.get(page_url)
+        response.raise_for_status()
+        return response.text
+
 def crawl_article(url: str, config: CrawlConfig, session: Session) -> bool:
     """爬取单个文章页面，返回是否成功"""
     try:
@@ -617,10 +625,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
         logger.info(f"Crawling list page {page_count}: {page_url}")
 
         try:
-            with httpx.Client(timeout=30.0, follow_redirects=True, headers={"User-Agent": _random_ua()}) as client:
-                response = client.get(page_url)
-                response.raise_for_status()
-                html = response.text
+            html = _fetch_list_page(page_url)
 
             # 解析总页数和总文章数（仅在第一页时）
             if page_count == 1:
@@ -671,10 +676,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
                 logger.info(f"Retrying page {page_count} ({retry_count}/{max_retries}): {page_url}")
                 time.sleep(_crawl_delay(settings.CRAWL_DELAY_SECONDS) * 2)
                 try:
-                    with httpx.Client(timeout=30.0, follow_redirects=True, headers={"User-Agent": _random_ua()}) as client:
-                        response = client.get(page_url)
-                        response.raise_for_status()
-                        html = response.text
+                    html = _fetch_list_page(page_url)
 
                     if page_count == 1:
                         total_pages = extract_total_pages(html)
