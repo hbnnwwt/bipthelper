@@ -109,10 +109,6 @@ _progress_lock = threading.Lock()
 crawl_running = False
 crawl_stop_requested = False
 
-# 单配置爬取状态管理（config_id -> {status, thread, stop_event, progress})
-_config_crawl_state = {}
-_config_crawl_lock = threading.Lock()
-
 # 定时调度器
 _scheduler_thread = None
 _scheduler_running = False
@@ -130,29 +126,6 @@ crawl_progress = {
     "articles_crawled": 0,
     "articles_total": 0,       # 当前配置预估的总文章数
 }
-
-def get_config_crawl_status(config_id: str) -> dict:
-    """获取单个配置的爬取状态"""
-    with _config_crawl_lock:
-        return _config_crawl_state.get(config_id, {"status": "idle"})
-
-def set_config_crawl_status(config_id: str, status: str, **kwargs):
-    """设置单个配置的爬取状态"""
-    with _config_crawl_lock:
-        state = _config_crawl_state.get(config_id, {"status": "idle"})
-        state["status"] = status
-        state.update(kwargs)
-        _config_crawl_state[config_id] = state
-
-def clear_config_crawl_status(config_id: str):
-    """清除单个配置的爬取状态"""
-    with _config_crawl_lock:
-        _config_crawl_state.pop(config_id, None)
-
-def get_all_config_crawl_status() -> dict:
-    """获取所有配置的爬取状态"""
-    with _config_crawl_lock:
-        return dict(_config_crawl_state)
 
 def request_crawl_stop():
     """请求停止爬取"""
@@ -178,9 +151,6 @@ def reset_crawl_state():
             "articles_crawled": 0,
             "articles_total": 0,
         }
-
-def is_crawl_stopped():
-    return crawl_stop_requested
 
 HTMLS_DIR = Path(settings.HTMLS_DIR)
 HTMLS_DIR.mkdir(parents=True, exist_ok=True)
@@ -745,11 +715,6 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
     logger.info(f"List page crawl complete. New articles: {new_count}, Total pages crawled: {page_count}")
     return new_count
 
-def crawl_url(config: CrawlConfig, session: Session) -> bool:
-    """爬取单个配置（兼容旧接口）"""
-    new_count = crawl_list_page(config, session)
-    return new_count > 0
-
 def crawl_all(session=None):
     """爬取所有启用的配置（线程安全）"""
     global crawl_running
@@ -858,192 +823,6 @@ def crawl_configs(config_ids: list[str], session=None):
                 "articles_crawled": 0,
                 "articles_total": 0,
             }
-
-
-def crawl_single_config(config_id: str, stop_event=None, session=None):
-    """爬取单个配置（支持暂停/恢复）"""
-    import threading
-    try:
-        # 创建 stop_event（如果不是从恢复）
-        if stop_event is None:
-            stop_event = threading.Event()
-
-        set_config_crawl_status(config_id, status="running", stop_event=stop_event, progress={"page": 0, "total_pages": 0, "articles_crawled": 0})
-
-        if session is None:
-            with create_session() as new_session:
-                _crawl_single_config_impl(new_session, config_id, stop_event)
-        else:
-            _crawl_single_config_impl(session, config_id, stop_event)
-    except Exception as e:
-        logger.error(f"Config crawl error: {e}")
-        set_config_crawl_status(config_id, status="error", error=str(e))
-    finally:
-        # 延迟清理状态，让前端有时间收到最终状态
-        def _delayed_clear():
-            import time
-            time.sleep(3)  # 等 3 秒再清除，确保前端轮询到最终状态
-            clear_config_crawl_status(config_id)
-        import threading
-        threading.Thread(target=_delayed_clear, daemon=True).start()
-
-
-def _crawl_single_config_impl(session: Session, config_id: str, stop_event):
-    """实际爬取单个配置的内部实现"""
-    config = session.get(CrawlConfig, config_id)
-    if not config or not config.enabled:
-        logger.warning(f"Config {config_id} not found or disabled")
-        return
-
-    # 提示：如果选择器是 .subArticleCon，说明是菜谱类配置
-    if config.selector == ".subArticleCon":
-        logger.info(f"[tip] Config '{config.name}' uses .subArticleCon selector for rich content extraction")
-
-    # 检查是否被停止
-    if stop_event.is_set():
-        set_config_crawl_status(config_id, status="stopped")
-        return
-
-    set_config_crawl_status(config_id, status="running", progress={"page": 0, "articles_crawled": 0})
-
-    # 复用 crawl_list_page 逻辑，但传入 stop_event
-    new_count = _crawl_list_page_with_event(config, session, stop_event)
-
-    # 更新配置
-    config.last_crawl = datetime.now().isoformat()
-    if not config.initialized:
-        config.initialized = True
-    session.add(config)
-    session.commit()
-
-    set_config_crawl_status(config_id, status="completed", progress={"articles_crawled": new_count})
-    logger.info(f"Config {config.name} crawl complete. New articles: {new_count}")
-
-
-def _crawl_list_page_with_event(config: CrawlConfig, session: Session, stop_event) -> int:
-    """crawl_list_page 的变体，支持 stop_event 暂停/停止"""
-    if not config.is_list_page:
-        return 1 if crawl_article(config.url, config, session) else 0
-
-    visited_pages = set()
-    visited_articles = set()
-    new_count = 0
-
-    is_incremental = config.initialized and config.pagination_max > 0
-    if is_incremental:
-        existing_docs = session.exec(select(Document.url).where(Document.category == config.category)).all()
-        visited_articles.update(existing_docs)
-        max_pages = 1
-    else:
-        max_pages = config.pagination_max if config.pagination_max > 0 else 999
-
-    page_url = config.url
-    page_count = 0
-    total_pages = 0
-    total_articles = 0
-    articles_crawled_count = 0
-
-    logger.info(f"Crawl mode: {'incremental' if is_incremental else 'full'}, max_pages={max_pages}")
-
-    while page_url and page_url not in visited_pages and page_count < max_pages:
-        # 检查停止/暂停
-        if stop_event.is_set():
-            logger.info(f"Crawl paused/stopped for config {config.name}")
-            set_config_crawl_status(config.id, status="paused", progress={"page": page_count, "articles_crawled": articles_crawled_count})
-            stop_event.wait()  # 阻塞等待恢复
-            stop_event.clear()  # 清除暂停状态
-
-        visited_pages.add(page_url)
-        page_count += 1
-        set_config_crawl_status(config.id, status="running", progress={"page": page_count, "total_pages": total_pages, "articles_crawled": articles_crawled_count})
-
-        if page_count > 1:
-            time.sleep(_crawl_delay(settings.CRAWL_DELAY_SECONDS))
-        logger.info(f"Crawling list page {page_count}: {page_url}")
-
-        try:
-            with httpx.Client(timeout=30.0, follow_redirects=True, headers={"User-Agent": _random_ua()}) as client:
-                response = client.get(page_url)
-                response.raise_for_status()
-                html = response.text
-
-            if page_count == 1:
-                total_pages = extract_total_pages(html)
-                total_articles = extract_total_articles(html)
-                logger.info(f"Parsed total pages: {total_pages}, total articles: {total_articles}")
-
-            article_links = extract_article_links(html, page_url, config.article_selector, config.link_prefix)
-            logger.info(f"Found {len(article_links)} article links on page {page_count}")
-
-            if not article_links:
-                logger.warning(f"[crawl] No article links found! selector='{config.article_selector}'")
-
-            for article_url in article_links:
-                if stop_event.is_set():
-                    set_config_crawl_status(config.id, status="paused")
-                    stop_event.wait()
-                    stop_event.clear()
-
-                if article_url not in visited_articles:
-                    if crawl_article(article_url, config, session):
-                        new_count += 1
-                    articles_crawled_count += 1
-                    set_config_crawl_status(config.id, status="running", progress={"page": page_count, "articles_crawled": articles_crawled_count})
-                    visited_articles.add(article_url)
-
-            if config.pagination_selector:
-                next_url = extract_next_page_link(html, page_url, config.pagination_selector)
-                page_url = next_url
-            else:
-                page_url = None
-
-        except Exception as e:
-            logger.error(f"Failed to crawl list page {page_url}: {e}")
-            retry_count = 0
-            max_retries = 2
-            retry_success = False
-            while retry_count < max_retries and not retry_success:
-                retry_count += 1
-                time.sleep(_crawl_delay(settings.CRAWL_DELAY_SECONDS) * 2)
-                try:
-                    with httpx.Client(timeout=30.0, follow_redirects=True, headers={"User-Agent": _random_ua()}) as client:
-                        response = client.get(page_url)
-                        response.raise_for_status()
-                        html = response.text
-
-                    if page_count == 1:
-                        total_pages = extract_total_pages(html)
-                        total_articles = extract_total_articles(html)
-
-                    article_links = extract_article_links(html, page_url, config.article_selector, config.link_prefix)
-                    for article_url in article_links:
-                        if stop_event.is_set():
-                            break
-                        if article_url not in visited_articles:
-                            if crawl_article(article_url, config, session):
-                                new_count += 1
-                            articles_crawled_count += 1
-                            visited_articles.add(article_url)
-
-                    if config.pagination_selector:
-                        next_url = extract_next_page_link(html, page_url, config.pagination_selector)
-                        page_url = next_url
-                    else:
-                        page_url = None
-                    retry_success = True
-                except Exception as retry_e:
-                    logger.error(f"Retry {retry_count} failed: {retry_e}")
-                    if retry_count >= max_retries:
-                        page_url = None
-
-    config.last_crawl = datetime.now().isoformat()
-    if not config.initialized:
-        config.initialized = True
-    session.add(config)
-    session.commit()
-
-    logger.info(f"List page crawl complete. New articles: {new_count}, Total pages crawled: {page_count}")
-    return new_count
 
 
 def _crawl_configs_impl(session: Session, config_ids: list[str]):
