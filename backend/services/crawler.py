@@ -234,19 +234,18 @@ def extract_article_metadata(html: str, base_url: str) -> dict:
         "publish_date": publish_date,
     }
 
-def extract_main_content(html: str, selector: str = "body") -> tuple[str, str]:
-    """提取正文内容和标题"""
-    soup = BeautifulSoup(html, "html.parser")
-
-    # 提取标题
+def _extract_title(soup) -> str:
+    """从 BeautifulSoup 对象提取标题"""
     title = ""
     if soup.title:
         title = soup.title.string or ""
     h1 = soup.find("h1")
     if h1:
         title = h1.get_text(strip=True) or title
+    return title
 
-    # 提取正文（支持备选选择器，兼容不同页面结构）
+def _extract_body(soup, selector: str):
+    """用备选选择器列表提取正文元素"""
     fallback_selectors = [selector, ".subArticleCon", "#content", ".content", ".article-body", "body"]
     main = None
     for sel in fallback_selectors:
@@ -254,105 +253,95 @@ def extract_main_content(html: str, selector: str = "body") -> tuple[str, str]:
             continue
         main = soup.select_one(sel)
         if main and len(main.get_text(strip=True)) > 50:
-            break  # 找到内容足够丰富的元素
+            break
     if not main:
-        main = soup.body  # 最终降级到 body
+        main = soup.body
+    return main
+
+def _clean_unwanted(main):
+    """移除 script/style/nav/footer/header/按钮/功能链接"""
+    for tag in main.find_all(["script", "style", "nav", "footer", "header"]):
+        tag.decompose()
+    for tag in main.find_all(["p", "span", "div"]):
+        text = tag.get_text(strip=True)
+        if "浏览次数" in text or "发布单位" in text:
+            tag.decompose()
+    for tag in main.find_all(["button", "input"]):
+        tag.decompose()
+    for tag in main.find_all("a"):
+        txt = tag.get_text(strip=True)
+        if any(k in txt for k in ["保存", "关闭", "打印", "分享", "收藏"]):
+            tag.decompose()
+
+def _process_tables(soup, main):
+    """将表格转换为结构化文本"""
+    for table in main.find_all("table"):
+        try:
+            rows = table.find_all("tr")
+            if not rows:
+                continue
+            max_cols = 0
+            for row in rows:
+                col_count = sum(int(cell.get("colspan", 1)) for cell in row.find_all(["td", "th"]))
+                max_cols = max(max_cols, col_count)
+            if max_cols == 0:
+                continue
+            grid = []
+            row_span_map = [None] * max_cols
+            for row_el in rows:
+                grid_row = ["" for _ in range(max_cols)]
+                for col in range(max_cols):
+                    if row_span_map[col]:
+                        text, remaining = row_span_map[col]
+                        grid_row[col] = text
+                        row_span_map[col] = (text, remaining - 1) if remaining > 1 else None
+                col_idx = 0
+                for cell in row_el.find_all(["td", "th"]):
+                    text = cell.get_text(strip=True)
+                    rowspan = int(cell.get("rowspan", 1))
+                    colspan = int(cell.get("colspan", 1))
+                    while col_idx < max_cols and grid_row[col_idx]:
+                        col_idx += 1
+                    for c in range(colspan):
+                        if col_idx + c < max_cols:
+                            grid_row[col_idx + c] = text
+                            if rowspan > 1:
+                                row_span_map[col_idx + c] = (text, rowspan - 1)
+                    col_idx += colspan
+                grid.append(grid_row)
+            lines = []
+            for g_row in grid:
+                cells = [t for t in g_row if t]
+                if cells:
+                    lines.append(" - " + "、".join(cells))
+            if lines:
+                table.replace_with(soup.new_string("\n".join(lines) + "\n"))
+        except Exception:
+            pass
+
+def _process_lists(soup, main):
+    """列表项前加短横线"""
+    for li in main.find_all("li"):
+        text = li.get_text(strip=True)
+        if text and not text.startswith("-") and not text.startswith("•"):
+            li.replace_with(soup.new_string(f"  - {text}\n"))
+
+def _cleanup_content(text: str) -> str:
+    """清理多余空行，移除过短行"""
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    lines = [line for line in text.split("\n") if line.strip() and len(line.strip()) > 1]
+    return "\n".join(lines)
+
+def extract_main_content(html: str, selector: str = "body") -> tuple[str, str]:
+    """提取正文内容和标题"""
+    soup = BeautifulSoup(html, "html.parser")
+    title = _extract_title(soup)
+    main = _extract_body(soup, selector)
     if main:
-        # 移除脚本和样式
-        for tag in main.find_all(["script", "style", "nav", "footer", "header"]):
-            tag.decompose()
-
-        # 移除元数据行（如"发布单位：xxx 发布日期：xxx 浏览次数：168"）
-        for tag in main.find_all(["p", "span", "div"]):
-            text = tag.get_text(strip=True)
-            if "浏览次数" in text or "发布单位" in text:
-                tag.decompose()
-
-        # 移除按钮和功能链接（如"保存信息"、"关闭窗口"、"打印"等）
-        for tag in main.find_all(["button", "input"]):
-            tag.decompose()
-        for tag in main.find_all("a"):
-            txt = tag.get_text(strip=True)
-            if any(k in txt for k in ["保存", "关闭", "打印", "分享", "收藏"]):
-                tag.decompose()
-
-        # 表格内容：转换为结构化文本格式，保留行列关系
-        # 处理 rowspan/colspan：先构建单元格矩阵，追踪跨行单元格
-        for table in main.find_all("table"):
-            try:
-                rows = table.find_all("tr")
-                if not rows:
-                    continue
-
-                # 计算最大列数
-                max_cols = 0
-                for row in rows:
-                    col_count = sum(int(cell.get("colspan", 1)) for cell in row.find_all(["td", "th"]))
-                    max_cols = max(max_cols, col_count)
-
-                if max_cols == 0:
-                    continue
-
-                # grid[row][col] = text，row_span_map[col] = (text, remaining_rows)
-                grid = []
-                row_span_map = [None] * max_cols  # 上方单元格 rowspan 状态
-
-                for row_el in rows:
-                    grid_row = [""] * max_cols
-
-                    # 第1步：填入上方跨行单元格
-                    for col in range(max_cols):
-                        if row_span_map[col]:
-                            text, remaining = row_span_map[col]
-                            grid_row[col] = text
-                            row_span_map[col] = (text, remaining - 1) if remaining > 1 else None
-
-                    # 第2步：填入当前行单元格
-                    col_idx = 0
-                    for cell in row_el.find_all(["td", "th"]):
-                        text = cell.get_text(strip=True)
-                        rowspan = int(cell.get("rowspan", 1))
-                        colspan = int(cell.get("colspan", 1))
-
-                        # 跳过已被占的列（包括上方跨行下来的）
-                        while col_idx < max_cols and grid_row[col_idx]:
-                            col_idx += 1
-
-                        for c in range(colspan):
-                            if col_idx + c < max_cols:
-                                grid_row[col_idx + c] = text
-                                if rowspan > 1:
-                                    row_span_map[col_idx + c] = (text, rowspan - 1)
-                        col_idx += colspan
-
-                    grid.append(grid_row)
-
-                # 输出
-                lines = []
-                for g_row in grid:
-                    cells = [t for t in g_row if t]
-                    if cells:
-                        lines.append(" - " + "、".join(cells))
-                if lines:
-                    table.replace_with(soup.new_string("\n".join(lines) + "\n"))
-            except Exception:
-                pass
-
-        # 列表项：每项前加短横线，保持缩进可读性
-        for li in main.find_all("li"):
-            text = li.get_text(strip=True)
-            if text and not text.startswith("-") and not text.startswith("•"):
-                li.replace_with(soup.new_string(f"  - {text}\n"))
-
-        content = main.get_text(separator="\n", strip=True)
-
-        # 清理多余空行
-        content = re.sub(r"\n{3,}", "\n\n", content)
-
-        # 移除过短且无意义的行（纯空格/标点）
-        lines = [line for line in content.split("\n") if line.strip() and len(line.strip()) > 1]
-        content = "\n".join(lines)
-
+        _clean_unwanted(main)
+        _process_tables(soup, main)
+        _process_lists(soup, main)
+        content = _cleanup_content(main.get_text(separator="\n", strip=True))
         return title, content
     return title, soup.get_text(separator="\n", strip=True)
 
