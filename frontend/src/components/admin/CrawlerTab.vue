@@ -14,6 +14,9 @@
           <span class="overall-label">
             整体进度 · {{ crawlProgress.config_index }}/{{ crawlProgress.total_configs }} 个配置
           </span>
+          <span v-if="currentConfigSpeed > 0" class="speed-label">
+            · {{ currentConfigSpeed }} 篇/秒
+          </span>
           <div class="overall-track">
             <div class="overall-fill" :style="{ width: overallPercent + '%' }"></div>
           </div>
@@ -269,9 +272,6 @@ const filterParent = ref('')
 const filterSub = ref('')
 let logTimer = null
 let statusTimer = null
-// 速度计算：记录上次状态用于计算爬取速度
-let lastArticlesCrawled = 0
-let lastProgressTime = Date.now()
 
 // 整体进度百分比
 const overallPercent = computed(() => {
@@ -291,6 +291,19 @@ const overallPercent = computed(() => {
     ? (running.page / running.total_pages) / configs.length
     : 0
   return Math.round((baseFrac + runningFrac) * 100)
+})
+
+// 当前正在爬取配置的速度（篇/秒）
+const currentConfigSpeed = computed(() => {
+  const { phase, configs } = crawlProgress.value
+  if (phase !== 'running' || !configs?.length) return 0
+  const running = configs.find(c => c.status === 'running')
+  if (!running) return 0
+  const elapsed = running.elapsed_seconds || 0
+  if (elapsed < 1) return 0
+  const diff = running.articles_crawled - (running.articles_crawled_at_start || 0)
+  if (diff <= 0) return 0
+  return Math.round(diff / elapsed * 10) / 10
 })
 
 // 根据索引获取配置ID（1-based index）
@@ -321,25 +334,6 @@ function getConfigProgressStatus(configId) {
 function getConfigProgress(configId) {
   return crawlProgress.value.configs?.find(c => c.id === configId) || { page: 0, total_pages: 0, articles_crawled: 0, articles_total: 0 }
 }
-
-const crawlSpeed = computed(() => {
-  const now = Date.now()
-  const timeDiff = (now - lastProgressTime) / 1000 // 秒
-  if (timeDiff < 1) return 0
-
-  const articlesDiff = crawlProgress.value.articles_crawled - lastArticlesCrawled
-  if (articlesDiff < 0) {
-    // 配置切换了，重置计数
-    lastArticlesCrawled = crawlProgress.value.articles_crawled
-    lastProgressTime = now
-    return 0
-  }
-
-  const speed = Math.round(articlesDiff / timeDiff * 10) / 10
-  lastArticlesCrawled = crawlProgress.value.articles_crawled
-  lastProgressTime = now
-  return speed
-})
 
 // 三级过滤
 const parentOptions = computed(() => [...new Set(configs.value.map(c => c.parent_category).filter(Boolean))])
@@ -626,6 +620,11 @@ watch(() => props.tab, (newTab) => {
   font-size: 0.75rem;
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
+}
+.speed-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-left: 0.5rem;
 }
 .overall-track {
   height: 6px;
