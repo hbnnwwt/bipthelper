@@ -576,7 +576,7 @@ def crawl_article(url: str, config: CrawlConfig, session: Session) -> bool:
         logger.error(f"[crawl_article] Failed to crawl article {url}: {e}")
         return False
 
-def crawl_list_page(config: CrawlConfig, session: Session) -> int:
+def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
     """爬取列表页及其分页，返回新增/更新的文章数量"""
     if not config.is_list_page:
         # 非列表页，直接爬取单个URL
@@ -585,6 +585,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
     visited_pages = set()  # 已访问的分页页
     visited_articles = set()  # 已爬取的文章URL（当前会话）
     new_count = 0
+    stopped = False
 
     # 全量模式：不加载历史 URL，重新爬取所有文章
     # 增量模式：从数据库加载已爬取的文章URL（按分类过滤）
@@ -611,6 +612,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
     while page_url and page_url not in visited_pages and page_count < max_pages:
         if crawl_stop_requested:
             logger.info("Crawl stopped by user")
+            stopped = True
             break
         visited_pages.add(page_url)
         page_count += 1
@@ -719,8 +721,13 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> int:
     session.add(config)
     session.commit()
 
-    logger.info(f"List page crawl complete. New articles: {new_count}, Total pages crawled: {page_count}")
-    return new_count
+    logger.info(f"List page crawl complete. New articles: {new_count}, pages: {page_count}, stopped: {stopped}")
+    return CrawlResult(
+        articles_crawled=articles_crawled_count,
+        new_articles=new_count,
+        pages_crawled=page_count,
+        stopped=stopped,
+    )
 
 def crawl_all(session=None):
     """爬取所有启用的配置（线程安全）"""
