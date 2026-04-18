@@ -3,8 +3,7 @@ from typing import Optional
 from datetime import datetime, timezone
 import secrets
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+from models._utils import _now
 
 class InviteCode(SQLModel, table=True):
     __tablename__ = "invite_codes"

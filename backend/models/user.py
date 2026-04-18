@@ -3,8 +3,7 @@ from typing import Optional
 from datetime import datetime, timezone
 import uuid
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+from models._utils import _now
 
 class User(SQLModel, table=True):
     __tablename__ = "users"

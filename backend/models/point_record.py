@@ -3,8 +3,7 @@ from datetime import datetime, timezone
 from typing import Optional
 import uuid
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+from models._utils import _now
 
 class PointRecord(SQLModel, table=True):
     __tablename__ = "point_records"
