@@ -646,13 +646,11 @@ def extract_total_articles(html: str) -> int:
     return 0
 
 @_retryable_request
-def _fetch_list_page(page_url: str) -> str:
-    """请求列表页，返回 HTML 内容"""
-    with httpx.Client(timeout=30.0, follow_redirects=True,
-                      headers={"User-Agent": _random_ua()}) as client:
-        response = client.get(page_url)
-        response.raise_for_status()
-        return response.text
+def _fetch_list_page(http_client, page_url: str) -> str:
+    """请求列表页，返回 HTML 内容（复用连接池 client）"""
+    response = http_client.get(page_url)
+    response.raise_for_status()
+    return response.text
 
 def crawl_article(url: str, config: CrawlConfig, session: Session) -> bool:
     """爬取单个文章页面，返回是否成功"""
@@ -764,14 +762,16 @@ def crawl_article(url: str, config: CrawlConfig, session: Session) -> bool:
         return False
 
 def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
-    """爬取列表页及其分页，返回新增/更新的文章数量"""
+    """爬取列表页（连接池复用入口）"""
+    with httpx.Client(timeout=30.0, follow_redirects=True,
+                      headers={"User-Agent": _random_ua()}) as http_client:
+        return _crawl_list_page_impl(http_client, config, session)
+
+def _crawl_list_page_impl(http_client, config: CrawlConfig, session: Session) -> CrawlResult:
+    """crawl_list_page 内部实现，接收共享 http_client"""
     if not config.is_list_page:
         # 非列表页，直接爬取单个URL
         return 1 if crawl_article(config.url, config, session) else 0
-
-    # HTTP 客户端（Task 4 会优化为连接池）
-    http_client = httpx.Client(timeout=30.0, follow_redirects=True,
-                               headers={"User-Agent": _random_ua()})
 
     visited_pages = set()  # 已访问的分页页
     visited_articles = set()  # 已爬取的文章URL（当前会话）
@@ -816,7 +816,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
         logger.info(f"Crawling list page {page_count}: {page_url}")
 
         try:
-            html = _fetch_list_page(page_url)
+            html = _fetch_list_page(http_client, page_url)
 
             # 解析总页数和总文章数（仅在第一页时）
             if page_count == 1:
@@ -878,7 +878,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
                 logger.info(f"Retrying page {page_count} ({retry_count}/{max_retries}): {page_url}")
                 time.sleep(_crawl_delay(settings.CRAWL_DELAY_SECONDS) * 2)
                 try:
-                    html = _fetch_list_page(page_url)
+                    html = _fetch_list_page(http_client, page_url)
 
                     if page_count == 1:
                         total_pages = extract_total_pages(html)
