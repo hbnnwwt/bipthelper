@@ -14,4 +14,6 @@ class MenuItem(SQLModel, table=True):
     meal_type: str = ""
     menu_date: str = Field(index=True)
     source_url: str = ""
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )

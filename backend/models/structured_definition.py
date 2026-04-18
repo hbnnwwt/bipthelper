@@ -10,4 +10,6 @@ class StructuredDefinition(SQLModel, table=True):
     table_name: str
     fields_schema: str = "[]"
     parser_type: str = "llm"
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
