@@ -127,13 +127,12 @@
           <option value="">全部大类</option>
           <option v-for="p in parentOptions" :key="p" :value="p">{{ p }}</option>
         </select>
-        <select v-model="filterSub" class="filter-select">
+        <select v-model="filterSub" class="filter-select" :disabled="!filterParent">
           <option value="">全部分类</option>
           <option v-for="s in subOptions" :key="s" :value="s">{{ s }}</option>
         </select>
         <span class="filter-count">{{ filteredConfigs.length }} / {{ configs.length }}</span>
       </div>
-
       <div class="config-list-header">
         <span class="config-list-count">{{ filteredConfigs.length }} 个配置{{ filterSearch || filterParent || filterSub ? '（已过滤）' : '' }}</span>
       </div>
