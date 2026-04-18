@@ -147,6 +147,139 @@ def _random_ua() -> str:
     return random.choice(USER_AGENTS)
 
 
+ARTICLE_BATCH_SIZE = 50  # 每批提交的文章数
+
+def _flush_article_batch(session: Session, batch: list, articles_crawled_count: int) -> tuple[int, int]:
+    """
+    批量提交一批 Document。
+    batch: list of dicts with keys: doc, is_new
+    返回 (new_count_delta, batch_size)
+    """
+    new_count_delta = 0
+    for item in batch:
+        session.add(item["doc"])
+        if item.get("is_new"):
+            new_count_delta += 1
+    session.commit()
+    # 触发向量化和结构化提取
+    for item in batch:
+        doc = item["doc"]
+        _trigger_after_save(doc)
+    return new_count_delta, len(batch)
+
+def _trigger_after_save(doc):
+    """触发向量化和结构化提取（后台）"""
+    try:
+        from services.structured_extractor import trigger_extraction
+        trigger_extraction(doc_id=doc.id, category=doc.category or "", sub_category=doc.sub_category or "", content=doc.content or "", source_url=doc.url)
+    except Exception as e:
+        logger.warning(f"[crawl] Failed to trigger structured extraction: {e}")
+    try:
+        from services.ai.embedding import embed_document
+        def _embed():
+            try:
+                embed_document(doc_id=doc.id, title=doc.title, content=doc.content or "", url=doc.url, category=doc.category or "", department=doc.department or "", parent_category=doc.parent_category or "", sub_category=doc.sub_category or "")
+            except Exception as e:
+                logger.warning(f"[embed] Failed to embed doc {doc.id}: {e}")
+        import threading
+        t = threading.Thread(target=_embed, daemon=True)
+        t.start()
+    except Exception as e:
+        logger.warning(f"[crawl] Failed to spawn embedding thread: {e}")
+
+def _build_article_doc(http_client, url: str, config: CrawlConfig, session: Session) -> tuple[dict | None, bool]:
+    """
+    构建 Article Document 对象（不 commit）。
+    返回 (doc_dict, is_new)。若内容无变化返回 (None, False)。
+    doc_dict keys: doc (Document), is_new (bool)
+    """
+    from models.document_fingerprint import _url_hash, DocumentFingerprint
+    from sqlmodel import select
+    import hashlib
+
+    try:
+        time.sleep(_crawl_delay(settings.CRAWL_ARTICLE_DELAY))
+        _enforce_domain_delay(url)
+
+        response = http_client.get(url)
+        response.raise_for_status()
+        html = response.text
+
+        content_hash = hashlib.sha256(html.encode()).hexdigest()
+
+        # 检查 fingerprint（去重 + 更新检测）
+        url_h = _url_hash(url)
+        fp = session.exec(
+            select(DocumentFingerprint).where(DocumentFingerprint.url_hash == url_h)
+        ).one_or_none()
+
+        if fp and fp.content_hash == content_hash:
+            return None, False  # 内容无变化，跳过
+
+        # 保存原始 HTML
+        url_hash_md5 = hashlib.md5(url.encode()).hexdigest()
+        domain = urlparse(url).netloc.replace(":", "_")
+        date_dir = datetime.now().strftime("%Y-%m-%d")
+        html_subdir = HTMLS_DIR / date_dir / domain
+        html_subdir.mkdir(parents=True, exist_ok=True)
+        html_file = html_subdir / f"{url_hash_md5}.html"
+        html_file.write_text(html, encoding="utf-8")
+
+        meta = extract_article_metadata(html, url)
+        title, content = extract_main_content(html, config.selector)
+        now = datetime.now().isoformat()
+
+        existing_doc = session.exec(select(Document).where(Document.url == url)).first()
+        is_new = existing_doc is None
+
+        if existing_doc:
+            doc = existing_doc
+            doc.title = title
+            doc.content = content
+            doc.content_hash = content_hash
+            doc.updated_at = now
+            doc.ai_status = "success"
+            doc.category = config.sub_category or config.category
+            doc.parent_category = config.parent_category
+            doc.sub_category = config.sub_category
+            if meta.get("department"):
+                doc.department = meta["department"]
+            if meta.get("publish_date"):
+                doc.publish_date = meta["publish_date"]
+        else:
+            doc = Document(
+                url=url,
+                title=title,
+                content=content,
+                category=config.sub_category or config.category,
+                parent_category=config.parent_category,
+                sub_category=config.sub_category,
+                department=meta.get("department"),
+                publish_date=meta.get("publish_date"),
+                ai_status="success",
+                content_hash=content_hash,
+                created_at=now,
+                updated_at=now,
+            )
+
+        # 更新或新建 fingerprint
+        if fp:
+            fp.content_hash = content_hash
+            fp.updated_at = now
+            fp.doc_id = doc.id
+            session.add(fp)
+        else:
+            session.add(DocumentFingerprint(
+                url_hash=url_h, url=url, content_hash=content_hash,
+                doc_id=doc.id, created_at=now, updated_at=now
+            ))
+
+        return {"doc": doc, "is_new": is_new}, True
+
+    except Exception as e:
+        logger.error(f"[_build_article_doc] Failed: {url}: {e}")
+        return None, False
+
 def _enforce_domain_delay(url: str):
     """确保同一域名的请求间隔至少 DOMAIN_MIN_DELAY 秒"""
     domain = urlparse(url).netloc
@@ -636,6 +769,10 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
         # 非列表页，直接爬取单个URL
         return 1 if crawl_article(config.url, config, session) else 0
 
+    # HTTP 客户端（Task 4 会优化为连接池）
+    http_client = httpx.Client(timeout=30.0, follow_redirects=True,
+                               headers={"User-Agent": _random_ua()})
+
     visited_pages = set()  # 已访问的分页页
     visited_articles = set()  # 已爬取的文章URL（当前会话）
     new_count = 0
@@ -662,6 +799,8 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
         max_pages = config.pagination_max if config.pagination_max > 0 else 999
 
     logger.info(f"Crawl mode: {'incremental' if is_incremental else 'full'}, max_pages={max_pages}")
+
+    article_batch = []  # 批量插入的缓冲
 
     while page_url and page_url not in visited_pages and page_count < max_pages:
         if crawl_stop_requested:
@@ -694,19 +833,30 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
             if not article_links:
                 logger.warning(f"[crawl] No article links found! selector='{config.article_selector}', link_prefix='{config.link_prefix}'")
 
-            # 爬取每篇文章
+            # 爬取每篇文章（批量模式）
             for article_url in article_links:
                 if crawl_stop_requested:
-                    logger.info("Crawl stopped by user")
+                    # flush remaining batch before stopping
+                    if article_batch:
+                        batch_new, batch_size = _flush_article_batch(session, article_batch, articles_crawled_count)
+                        new_count += batch_new
+                        articles_crawled_count += batch_size
+                        article_batch = []
                     stopped = True
                     break
                 # 全量模式：所有文章都爬取；增量模式：跳过已爬取的
                 if not is_incremental or article_url not in visited_articles:
-                    if crawl_article(article_url, config, session):
-                        new_count += 1
-                    articles_crawled_count += 1
-                    _update_progress(articles_crawled=articles_crawled_count)
-                    visited_articles.add(article_url)
+                    result, ok = _build_article_doc(http_client, article_url, config, session)
+                    if result:
+                        article_batch.append(result)
+                        articles_crawled_count += 1
+                        _update_progress(articles_crawled=articles_crawled_count)
+                        visited_articles.add(article_url)
+                        if len(article_batch) >= ARTICLE_BATCH_SIZE:
+                            batch_new, batch_size = _flush_article_batch(session, article_batch, articles_crawled_count)
+                            new_count += batch_new
+                            articles_crawled_count += batch_size
+                            article_batch = []
                 elif is_incremental:
                     logger.info(f"Skipping already crawled: {article_url}")
 
@@ -740,15 +890,34 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
 
                     for article_url in article_links:
                         if crawl_stop_requested:
+                            # flush remaining batch before stopping
+                            if article_batch:
+                                batch_new, batch_size = _flush_article_batch(session, article_batch, articles_crawled_count)
+                                new_count += batch_new
+                                articles_crawled_count += batch_size
+                                article_batch = []
                             stopped = True
                             break
                         # 全量模式：所有文章都爬取；增量模式：跳过已爬取的
                         if not is_incremental or article_url not in visited_articles:
-                            if crawl_article(article_url, config, session):
-                                new_count += 1
-                            articles_crawled_count += 1
-                            _update_progress(articles_crawled=articles_crawled_count)
-                            visited_articles.add(article_url)
+                            result, ok = _build_article_doc(http_client, article_url, config, session)
+                            if result:
+                                article_batch.append(result)
+                                articles_crawled_count += 1
+                                _update_progress(articles_crawled=articles_crawled_count)
+                                visited_articles.add(article_url)
+                                if len(article_batch) >= ARTICLE_BATCH_SIZE:
+                                    batch_new, batch_size = _flush_article_batch(session, article_batch, articles_crawled_count)
+                                    new_count += batch_new
+                                    articles_crawled_count += batch_size
+                                    article_batch = []
+
+                    # flush remaining batch after retry page processing
+                    if article_batch:
+                        batch_new, batch_size = _flush_article_batch(session, article_batch, articles_crawled_count)
+                        new_count += batch_new
+                        articles_crawled_count += batch_size
+                        article_batch = []
 
                     if config.pagination_selector:
                         next_url = extract_next_page_link(html, page_url, config.pagination_selector)
@@ -760,7 +929,20 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
                     logger.error(f"Retry {retry_count} failed: {retry_e}")
                     if retry_count >= max_retries:
                         logger.warning(f"Max retries reached, skipping page {page_count}")
+                        # flush remaining batch before exiting
+                        if article_batch:
+                            batch_new, batch_size = _flush_article_batch(session, article_batch, articles_crawled_count)
+                            new_count += batch_new
+                            articles_crawled_count += batch_size
+                            article_batch = []
                         page_url = None
+
+    # flush remaining batch at end of while loop
+    if article_batch:
+        batch_new, batch_size = _flush_article_batch(session, article_batch, articles_crawled_count)
+        new_count += batch_new
+        articles_crawled_count += batch_size
+        article_batch = []
 
     # 更新配置
     config.last_crawl = datetime.now().isoformat()
