@@ -692,6 +692,7 @@ def crawl_list_page(config: CrawlConfig, session: Session) -> CrawlResult:
 
                     for article_url in article_links:
                         if crawl_stop_requested:
+                            stopped = True
                             break
                         # 全量模式：所有文章都爬取；增量模式：跳过已爬取的
                         if not is_incremental or article_url not in visited_articles:
