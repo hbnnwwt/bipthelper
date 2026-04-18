@@ -10,6 +10,7 @@ from sqlmodel import Session, select
 from pathlib import Path
 from urllib.parse import urljoin, urlparse, parse_qs
 import logging
+from dataclasses import dataclass
 
 from config import get_settings
 from database import create_session
@@ -26,6 +27,15 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
 ]
+
+
+@dataclass
+class CrawlResult:
+    """crawl_list_page 的返回结果"""
+    articles_crawled: int   # 本次爬取的文章数（含新爬和重复跳过）
+    new_articles: int       # 本次新增的文章数
+    pages_crawled: int      # 本次爬取的分页数
+    stopped: bool           # 是否被用户主动停止
 
 
 def _crawl_delay(base: float) -> float:
