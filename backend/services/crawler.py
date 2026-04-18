@@ -761,13 +761,12 @@ def crawl_all(session=None):
                 "articles_total": 0,
             }
 
-def _crawl_all_impl(session: Session):
-    """实际爬取逻辑"""
+
+def _crawl_configs_iter(session: Session, configs: list[CrawlConfig]):
+    """共同爬取逻辑：进度初始化、逐个爬取、状态更新"""
     global crawl_progress
-    db_configs = session.exec(select(CrawlConfig).where(CrawlConfig.enabled == True)).all()
-    total = len(db_configs)
+    total = len(configs)
     crawl_progress["total_configs"] = total
-    # 初始化 configs 明细列表
     crawl_progress["configs"] = [
         {
             "id": c.id,
@@ -780,9 +779,9 @@ def _crawl_all_impl(session: Session):
             "elapsed_seconds": 0,
             "status": "pending",
         }
-        for c in db_configs
+        for c in configs
     ]
-    for i, config in enumerate(db_configs):
+    for i, config in enumerate(configs):
         if crawl_stop_requested:
             with _progress_lock:
                 crawl_progress["phase"] = "stopping"
@@ -795,16 +794,20 @@ def _crawl_all_impl(session: Session):
             crawl_progress["current_config"] = config.name
             crawl_progress["current_config_id"] = config.id
             crawl_progress["page"] = 0
-            crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
-            # 设置当前 config 状态为 running，记录起点
+            crawl_progress["articles_crawled"] = 0
             crawl_progress["configs"][i]["status"] = "running"
             crawl_progress["configs"][i]["articles_crawled_at_start"] = crawl_progress["articles_crawled"]
         global _config_start_time
         _config_start_time = time.time()
         result = crawl_list_page(config, session)
-        # 根据 result.stopped 决定状态
         with _progress_lock:
             crawl_progress["configs"][i]["status"] = "stopped" if result.stopped else "done"
+
+
+def _crawl_all_impl(session: Session):
+    """实际爬取逻辑"""
+    db_configs = session.exec(select(CrawlConfig).where(CrawlConfig.enabled == True)).all()
+    _crawl_configs_iter(session, db_configs)
 
 
 def crawl_configs(config_ids: list[str], session=None):
@@ -844,49 +847,9 @@ def crawl_configs(config_ids: list[str], session=None):
 
 def _crawl_configs_impl(session: Session, config_ids: list[str]):
     """爬取指定配置的内部实现"""
-    global crawl_progress
     db_configs = [session.get(CrawlConfig, cid) for cid in config_ids]
     db_configs = [c for c in db_configs if c is not None and c.enabled]
-    total = len(db_configs)
-    crawl_progress["total_configs"] = total
-    # 初始化 configs 明细列表
-    crawl_progress["configs"] = [
-        {
-            "id": c.id,
-            "name": c.name,
-            "page": 0,
-            "total_pages": 0,
-            "articles_crawled": 0,
-            "articles_crawled_at_start": 0,
-            "articles_total": 0,
-            "elapsed_seconds": 0,
-            "status": "pending",
-        }
-        for c in db_configs
-    ]
-    for i, config in enumerate(db_configs):
-        if crawl_stop_requested:
-            with _progress_lock:
-                crawl_progress["phase"] = "stopping"
-                crawl_progress["configs"][i]["status"] = "stopped"
-            logger.info("Crawl stopped by user (between configs)")
-            break
-        with _progress_lock:
-            crawl_progress["phase"] = "running"
-            crawl_progress["config_index"] = i + 1
-            crawl_progress["current_config"] = config.name
-            crawl_progress["current_config_id"] = config.id
-            crawl_progress["page"] = 0
-            crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
-            # 设置当前 config 状态为 running，记录起点
-            crawl_progress["configs"][i]["status"] = "running"
-            crawl_progress["configs"][i]["articles_crawled_at_start"] = crawl_progress["articles_crawled"]
-        global _config_start_time
-        _config_start_time = time.time()
-        result = crawl_list_page(config, session)
-        # 根据 result.stopped 决定状态
-        with _progress_lock:
-            crawl_progress["configs"][i]["status"] = "stopped" if result.stopped else "done"
+    _crawl_configs_iter(session, db_configs)
 
 def add_crawl_config(name: str, url: str, selector: str, category: str, session: Session,
                      is_list_page: bool = True, article_selector: str = "a",
