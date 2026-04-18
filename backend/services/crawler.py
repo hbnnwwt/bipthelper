@@ -110,12 +110,25 @@ def _random_ua() -> str:
     return random.choice(USER_AGENTS)
 
 
+def _enforce_domain_delay(url: str):
+    """确保同一域名的请求间隔至少 DOMAIN_MIN_DELAY 秒"""
+    domain = urlparse(url).netloc
+    now = time.time()
+    if domain in _domain_last_crawl:
+        elapsed = now - _domain_last_crawl[domain]
+        if elapsed < DOMAIN_MIN_DELAY:
+            time.sleep(DOMAIN_MIN_DELAY - elapsed)
+    _domain_last_crawl[domain] = time.time()
+
+
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
 # 爬虫运行状态（线程安全）
 _crawl_lock = threading.Lock()
 _progress_lock = threading.Lock()
+_domain_last_crawl: dict[str, float] = {}  # domain -> 上次爬取时间戳
+DOMAIN_MIN_DELAY = 2.0  # 同一域名最小请求间隔（秒）
 crawl_running = False
 crawl_stop_requested = False
 _config_start_time = None  # 当前配置开始时间（秒），用于计算速度
@@ -474,6 +487,7 @@ def crawl_article(url: str, config: CrawlConfig, session: Session) -> bool:
     """爬取单个文章页面，返回是否成功"""
     try:
         time.sleep(_crawl_delay(settings.CRAWL_ARTICLE_DELAY))
+        _enforce_domain_delay(url)
         with httpx.Client(timeout=30.0, follow_redirects=True, headers={"User-Agent": _random_ua()}) as client:
             response = client.get(url)
             response.raise_for_status()
