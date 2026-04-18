@@ -9,5 +9,6 @@ from .point_record import PointRecord
 from .embedding_config import EmbeddingConfig
 from .structured_definition import StructuredDefinition
 from .menu_item import MenuItem
+from .document_fingerprint import DocumentFingerprint, _url_hash
 
-__all__ = ["User", "Document", "CrawlConfig", "AIProvider", "AuditLog", "InviteCode", "PointRecord", "EmbeddingConfig", "StructuredDefinition", "MenuItem", "SQLModel"]
+__all__ = ["User", "Document", "CrawlConfig", "AIProvider", "AuditLog", "InviteCode", "PointRecord", "EmbeddingConfig", "StructuredDefinition", "MenuItem", "DocumentFingerprint", "_url_hash", "SQLModel"]

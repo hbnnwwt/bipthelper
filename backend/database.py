@@ -13,6 +13,7 @@ from models.point_record import PointRecord        # point_records
 from models.embedding_config import EmbeddingConfig
 from models.structured_definition import StructuredDefinition
 from models.menu_item import MenuItem
+from models.document_fingerprint import DocumentFingerprint
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
@@ -48,6 +49,7 @@ _session_binds = {
     EmbeddingConfig: key_engine,
     StructuredDefinition: key_engine,
     MenuItem: key_engine,
+    DocumentFingerprint: key_engine,
 }
 
 
