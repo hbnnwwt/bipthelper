@@ -29,6 +29,43 @@ USER_AGENTS = [
 ]
 
 
+DEFAULT_MAX_RETRIES = 3
+DEFAULT_BASE_DELAY = 2.0  # 秒
+
+def _retryable_request(func):
+    """包装 HTTP 请求函数，支持 429/5xx 退避重试"""
+    def wrapper(*args, **kwargs):
+        for attempt in range(DEFAULT_MAX_RETRIES):
+            try:
+                return func(*args, **kwargs)
+            except httpx.HTTPStatusError as e:
+                status = e.response.status_code
+                if status == 429 and attempt < DEFAULT_MAX_RETRIES - 1:
+                    retry_after = e.response.headers.get("Retry-After")
+                    if retry_after:
+                        wait = float(retry_after)
+                    else:
+                        wait = DEFAULT_BASE_DELAY * (2 ** attempt) + random.uniform(0, 1)
+                    logger.warning(f"[crawl] 429 received, retrying in {wait:.1f}s (attempt {attempt+1}/{DEFAULT_MAX_RETRIES})")
+                    time.sleep(wait)
+                    continue
+                if status >= 500 and attempt < DEFAULT_MAX_RETRIES - 1:
+                    wait = DEFAULT_BASE_DELAY * (2 ** attempt)
+                    logger.warning(f"[crawl] {status} server error, retrying in {wait:.1f}s (attempt {attempt+1}/{DEFAULT_MAX_RETRIES})")
+                    time.sleep(wait)
+                    continue
+                raise
+            except httpx.RequestError as e:
+                if attempt < DEFAULT_MAX_RETRIES - 1:
+                    wait = DEFAULT_BASE_DELAY * (2 ** attempt)
+                    logger.warning(f"[crawl] Request error: {e}, retrying in {wait:.1f}s")
+                    time.sleep(wait)
+                    continue
+                raise
+        return func(*args, **kwargs)  # 最后一搏
+    return wrapper
+
+
 @dataclass
 class CrawlResult:
     """crawl_list_page 的返回结果"""
@@ -475,6 +512,7 @@ def extract_total_articles(html: str) -> int:
     logger.warning(f"[extract] total_articles: no pattern matched in HTML")
     return 0
 
+@_retryable_request
 def _fetch_list_page(page_url: str) -> str:
     """请求列表页，返回 HTML 内容"""
     with httpx.Client(timeout=30.0, follow_redirects=True,
