@@ -118,6 +118,7 @@ _crawl_lock = threading.Lock()
 _progress_lock = threading.Lock()
 crawl_running = False
 crawl_stop_requested = False
+_config_start_time = None  # 当前配置开始时间（秒），用于计算速度
 
 # 定时调度器
 _scheduler_thread = None
@@ -184,6 +185,10 @@ def _update_progress(page: int = None, total_pages: int = None,
                 crawl_progress["configs"][idx]["articles_total"] = articles_total
             if articles_crawled is not None:
                 crawl_progress["configs"][idx]["articles_crawled"] = articles_crawled
+            # 更新已耗时
+            if _config_start_time is not None:
+                elapsed = time.time() - _config_start_time
+                crawl_progress["configs"][idx]["elapsed_seconds"] = elapsed
 
 HTMLS_DIR = Path(settings.HTMLS_DIR)
 HTMLS_DIR.mkdir(parents=True, exist_ok=True)
@@ -779,7 +784,9 @@ def _crawl_all_impl(session: Session):
             "page": 0,
             "total_pages": 0,
             "articles_crawled": 0,
+            "articles_crawled_at_start": 0,
             "articles_total": 0,
+            "elapsed_seconds": 0,
             "status": "pending",
         }
         for c in db_configs
@@ -798,8 +805,11 @@ def _crawl_all_impl(session: Session):
             crawl_progress["current_config_id"] = config.id
             crawl_progress["page"] = 0
             crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
-            # 设置当前 config 状态为 running
+            # 设置当前 config 状态为 running，记录起点
             crawl_progress["configs"][i]["status"] = "running"
+            crawl_progress["configs"][i]["articles_crawled_at_start"] = crawl_progress["articles_crawled"]
+        global _config_start_time
+        _config_start_time = time.time()
         result = crawl_list_page(config, session)
         # 根据 result.stopped 决定状态
         with _progress_lock:
@@ -856,7 +866,9 @@ def _crawl_configs_impl(session: Session, config_ids: list[str]):
             "page": 0,
             "total_pages": 0,
             "articles_crawled": 0,
+            "articles_crawled_at_start": 0,
             "articles_total": 0,
+            "elapsed_seconds": 0,
             "status": "pending",
         }
         for c in db_configs
@@ -875,8 +887,11 @@ def _crawl_configs_impl(session: Session, config_ids: list[str]):
             crawl_progress["current_config_id"] = config.id
             crawl_progress["page"] = 0
             crawl_progress["articles_crawled"] = 0  # 重置，开始新配置
-            # 设置当前 config 状态为 running
+            # 设置当前 config 状态为 running，记录起点
             crawl_progress["configs"][i]["status"] = "running"
+            crawl_progress["configs"][i]["articles_crawled_at_start"] = crawl_progress["articles_crawled"]
+        global _config_start_time
+        _config_start_time = time.time()
         result = crawl_list_page(config, session)
         # 根据 result.stopped 决定状态
         with _progress_lock:
