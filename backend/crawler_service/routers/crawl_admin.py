@@ -210,10 +210,8 @@ def delete_config(
 # --- 爬虫控制 ---
 
 @router.get("/crawl/status")
-def get_crawl_status(
-    current_admin: User = Depends(get_current_admin),
-):
-    """获取爬虫运行状态"""
+def get_crawl_status():
+    """获取爬虫运行状态（公开接口）"""
     return {
         "running": crawl_running,
         "stop_requested": crawl_stop_requested,
@@ -221,9 +219,7 @@ def get_crawl_status(
 
 
 @router.get("/crawl/progress")
-async def get_crawl_progress(
-    current_admin: User = Depends(get_current_admin),
-):
+async def get_crawl_progress():
     """获取爬取进度详情（SSE）"""
     async def event_generator():
         last_seen = {}
@@ -231,7 +227,7 @@ async def get_crawl_progress(
             progress = crawl_progress.copy()
             if progress != last_seen.get("progress"):
                 last_seen["progress"] = progress
-                yield {"event": "progress", "data": json.dumps(progress)}
+                yield f"event: progress\ndata: {json.dumps(progress)}\n\n"
             await asyncio.sleep(1)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
