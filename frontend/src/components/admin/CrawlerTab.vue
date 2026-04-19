@@ -248,7 +248,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import api from '../../api'
+import api, { crawlerApi } from '../../api'
 import { useToast } from '../../composables/toast'
 
 const props = defineProps(['tab'])
@@ -357,7 +357,7 @@ const newConfig = ref({
 
 async function loadConfigs() {
   try {
-    const { data } = await api.get('/admin/configs')
+    const { data } = await crawlerApi.get('/configs')
     configs.value = data.configs
   } catch (e) { error('加载爬虫配置失败') }
 }
@@ -376,8 +376,8 @@ async function importNavigation() {
   if (!confirm('将从首页抓取导航结构并批量创建配置，是否继续？')) return
   navLoading.value = true
   try {
-    const { data: navData } = await api.get('/admin/crawl/navigation')
-    const { data: batchData } = await api.post('/admin/crawl/configs/batch', { navigation: navData.navigation })
+    const { data: navData } = await crawlerApi.get('/crawl/navigation')
+    const { data: batchData } = await crawlerApi.post('/crawl/configs/batch', { navigation: navData.navigation })
     await loadConfigs()
     success(`成功导入 ${batchData.count} 个配置`)
   } catch (e) {
@@ -410,7 +410,7 @@ async function addConfig() {
   if (newConfig.value.article_selector && !validateSelector(newConfig.value.article_selector)) { error('文章链接选择器不能包含危险内容'); return }
   try {
     const params = { ...newConfig.value }
-    await api.post('/admin/configs', null, { params })
+    await crawlerApi.post('/configs', null, { params })
     newConfig.value = { name: '', url: '', selector: 'body', category: '', parent_category: '', sub_category: '', is_list_page: true, article_selector: 'ul.sub_list li a', link_prefix: '', pagination_selector: 'a[href*="index"]:has(img)', pagination_max: 0 }
     await loadConfigs()
     success('配置已添加')
@@ -419,14 +419,14 @@ async function addConfig() {
 
 async function toggleConfig(c) {
   try {
-    await api.put(`/admin/configs/${c.id}`, null, { params: { enabled: !c.enabled } })
+    await crawlerApi.put(`/configs/${c.id}`, null, { params: { enabled: !c.enabled } })
     await loadConfigs()
   } catch (e) { error('更新配置失败') }
 }
 
 async function deleteConfig(id) {
   try {
-    await api.delete(`/admin/configs/${id}`)
+    await crawlerApi.delete(`/configs/${id}`)
     await loadConfigs()
     success('配置已删除')
   } catch (e) { error('删除配置失败') }
@@ -440,7 +440,7 @@ async function triggerCrawl() {
       ? selectedConfigIds.value.join(",")
       : null
     const params = configIdsParam ? { config_ids: configIdsParam } : {}
-    await api.post('/admin/crawl/trigger', {}, { params })
+    await crawlerApi.post('/crawl/trigger', {}, { params })
     success('爬取已触发')
     // 立即获取进度（不等到下次轮询）
     loadCrawlStatus()
@@ -491,7 +491,7 @@ async function clearLogs() {
 
 async function loadCrawlStatus() {
   try {
-    const { data } = await api.get('/admin/crawl/status')
+    const { data } = await crawlerApi.get('/crawl/status')
     crawlStatus.value = data
     // 同时获取进度数据
     loadCrawlProgress()
@@ -500,14 +500,14 @@ async function loadCrawlStatus() {
 
 async function loadCrawlProgress() {
   try {
-    const { data } = await api.get('/admin/crawl/progress')
+    const { data } = await crawlerApi.get('/crawl/progress')
     crawlProgress.value = data
   } catch (e) { console.error('Failed to load crawl progress:', e) }
 }
 
 async function stopCrawl() {
   try {
-    await api.post('/admin/crawl/stop')
+    await crawlerApi.post('/crawl/stop')
     info('已请求停止爬取')
     loadCrawlStatus()
   } catch (e) { error('停止爬取失败') }
@@ -515,7 +515,7 @@ async function stopCrawl() {
 
 async function resetConfig(c) {
   try {
-    await api.put(`/admin/configs/${c.id}`, null, { params: { initialized: false, pagination_max: 0 } })
+    await crawlerApi.put(`/configs/${c.id}`, null, { params: { initialized: false, pagination_max: 0 } })
     await loadConfigs()
     success(`已重置"${c.name}"的爬取标记`)
   } catch (e) { error('重置配置失败') }
@@ -523,7 +523,7 @@ async function resetConfig(c) {
 
 async function updateInterval(configId, hours) {
   try {
-    await api.put(`/admin/configs/${configId}`, null, { params: { auto_interval_hours: hours } })
+    await crawlerApi.put(`/configs/${configId}`, null, { params: { auto_interval_hours: hours } })
     await loadConfigs()
   } catch (e) { error('更新自动间隔失败') }
 }

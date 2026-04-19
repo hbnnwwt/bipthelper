@@ -1,9 +1,17 @@
 import axios from 'axios'
 
+const CRAWLER_API = 'http://localhost:8001'
+
 const api = axios.create({
   baseURL: '/api',
   timeout: 30000,
   withCredentials: true, // 发送 cookies 到同源后端
+})
+
+const crawlerApi = axios.create({
+  baseURL: CRAWLER_API + '/admin',
+  timeout: 30000,
+  withCredentials: true,
 })
 
 api.interceptors.response.use(
@@ -20,4 +28,5 @@ api.interceptors.response.use(
   }
 )
 
+export { CRAWLER_API, crawlerApi }
 export default api
