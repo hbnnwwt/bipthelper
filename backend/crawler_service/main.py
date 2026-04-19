@@ -10,7 +10,7 @@ import threading
 
 from database import create_db_and_tables
 from services.crawler import crawl_all, start_scheduler
-from routers.crawl_admin import router as crawl_admin_router
+from crawler_service.routers.crawl_admin import router as crawl_admin_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
