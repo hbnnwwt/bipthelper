@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Header
 from typing import Optional
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 
 from database import get_session
 from models.document import Document
@@ -121,6 +121,63 @@ def approve_document(
     delete_document_from_index(doc_id)
     index_document(doc)
     return {"message": "Category approved", "category": target}
+
+
+@router.get("/documents")
+def list_documents(
+    page: int = 1,
+    page_size: int = 20,
+    category: Optional[str] = None,
+    parent_category: Optional[str] = None,
+    keyword: Optional[str] = None,
+    ai_status: Optional[str] = None,
+    sort: str = "updated_desc",
+    session: Session = Depends(get_session),
+    _: None = Depends(verify_organizer_key),
+):
+    """List documents for organizer frontend"""
+    query = select(Document)
+    if category:
+        query = query.where(Document.category == category)
+    if parent_category:
+        query = query.where(Document.parent_category == parent_category)
+    if keyword:
+        query = query.where(Document.title.contains(keyword))
+    if ai_status:
+        query = query.where(Document.ai_status == ai_status)
+    if sort == "updated_desc":
+        query = query.order_by(Document.updated_at.desc())
+    elif sort == "updated_asc":
+        query = query.order_by(Document.updated_at.asc())
+    elif sort == "created_desc":
+        query = query.order_by(Document.created_at.desc())
+    elif sort == "created_asc":
+        query = query.order_by(Document.created_at.asc())
+    total = session.exec(select(func.count()).select_from(query.subquery())).one()
+    docs = session.exec(query.offset((page - 1) * page_size).limit(page_size)).all()
+    return {
+        "docs": [
+            {
+                "id": d.id,
+                "title": d.title,
+                "url": d.url or "",
+                "content": d.content or "",
+                "category": d.category or "",
+                "parent_category": d.parent_category or "",
+                "sub_category": d.sub_category or "",
+                "department": d.department or "",
+                "publish_date": d.publish_date or "",
+                "ai_status": d.ai_status,
+                "ai_suggested_categories": d.ai_suggested_categories or "",
+                "updated_at": d.updated_at,
+                "created_at": d.created_at,
+            }
+            for d in docs
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 @router.get("/documents/categories")
