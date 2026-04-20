@@ -71,7 +71,7 @@ if not exist "node_modules" (
     echo.
 )
 
-echo [Step 2] Building frontend...
+echo [Step 2] Building search-service SPA (index.html)...
 if exist "C:\Program Files\nodejs\npm.cmd" (
     call "C:\Program Files\nodejs\npm.cmd" run build
 ) else (
@@ -83,10 +83,42 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Deploy search SPA
+echo [Step 3] Deploying search-service SPA...
+if exist "%~dp0backend\search_service\assets\frontend" (
+    rmdir /S /Q "%~dp0backend\search_service\assets\frontend" 2>nul
+)
+mkdir "%~dp0backend\search_service\assets\frontend" 2>nul
+xcopy /E /I /Y "%~dp0frontend\dist\*" "%~dp0backend\search_service\assets\frontend\" >nul 2>&1
+echo [Done] Search-service SPA deployed
+
+REM Build crawler-service SPA
+echo [Step 4] Building crawler-service SPA (crawler-admin.html)...
+if exist "C:\Program Files\nodejs\npm.cmd" (
+    call "C:\Program Files\nodejs\npm.cmd" -- --config vite.crawler.config.js
+) else (
+    node node_modules/vite/bin/vite.js build --config vite.crawler.config.js
+)
+if errorlevel 1 (
+    echo [Error] Crawler SPA build failed
+    pause
+    exit /b 1
+)
+
+REM Deploy crawler SPA
+echo [Step 5] Deploying crawler-service SPA...
+if exist "%~dp0backend\crawler_service\assets\frontend" (
+    rmdir /S /Q "%~dp0backend\crawler_service\assets\frontend" 2>nul
+)
+mkdir "%~dp0backend\crawler_service\assets\frontend" 2>nul
+xcopy /E /I /Y "%~dp0frontend\dist-crawler\*" "%~dp0backend\crawler_service\assets\frontend\" >nul 2>&1
+echo [Done] Crawler-service SPA deployed
+
 echo.
 echo ====================================
 echo [Success] Build completed!
-echo [Output] backend/assets/frontend/
+echo [Search SPA] backend/search_service/assets/frontend/
+echo [Crawler SPA] backend/crawler_service/assets/frontend/
 echo ====================================
 echo.
 echo Now you can run scripts\run.bat to start the system

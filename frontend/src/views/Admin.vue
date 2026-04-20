@@ -48,16 +48,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import UsersTab from '../components/admin/UsersTab.vue'
-import CrawlerTab from '../components/admin/CrawlerTab.vue'
-import DocsTab from '../components/admin/DocsTab.vue'
 import AuditTab from '../components/admin/AuditTab.vue'
 import InviteCodesTab from '../components/admin/InviteCodesTab.vue'
 
 const tab = ref('users')
 const tabs = [
   { key: 'users', label: '用户管理' },
-  { key: 'crawler', label: '爬虫配置' },
-  { key: 'docs', label: '文档管理' },
   { key: 'audit', label: '审计日志' },
   { key: 'codes', label: '激活码' },
   { key: 'ai', label: 'AI 配置' },
@@ -65,8 +61,6 @@ const tabs = [
 
 const tabComponents = {
   users: UsersTab,
-  crawler: CrawlerTab,
-  docs: DocsTab,
   audit: AuditTab,
   codes: InviteCodesTab,
 }
