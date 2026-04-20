@@ -19,6 +19,7 @@ from search_service.routers.admin import router as admin_router
 from search_service.routers.points import router as points_router
 from search_service.routers.search import router as search_router
 from search_service.routers.ai import router as ai_router
+from search_service.routers.organizer_docs import router as organizer_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -64,6 +65,7 @@ app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
 app.include_router(points_router, prefix="/api/points", tags=["points"])
 app.include_router(search_router, prefix="/api/search", tags=["search"])
 app.include_router(ai_router, prefix="/api/admin/ai", tags=["ai"])
+app.include_router(organizer_router, prefix="/api", tags=["organizer"])
 
 if AVATARS_DIR.exists():
     app.mount("/avatars", StaticFiles(directory=str(AVATARS_DIR), html=False), name="avatars")

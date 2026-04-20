@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_COLLECTION: str = "document_chunks"
 
+    # Organizer API 鉴权
+    ORGANIZER_API_KEY: str = ""
+
     class Config:
         env_file = ".env"
 
