@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, UploadFile, File
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, UploadFile, File, Header, Cookie
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
@@ -146,22 +146,50 @@ def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), se
     return response
 
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user_from_cookie)):
+def get_me(
+    authorization: Optional[str] = Header(None),
+    access_token: Optional[str] = Cookie(None),
+    session: Session = Depends(get_session),
+):
+    # Support both Authorization header (Bearer token) and httpOnly cookie
+    token = access_token
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    if not token:
+        raise credentials_exception
+
+    from jose import JWTError, jwt
+    from config import get_settings
+    settings = get_settings()
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    from sqlmodel import select
+    user = session.exec(select(User).where(User.username == username)).first()
+    if user is None or not user.is_active:
+        raise credentials_exception
+
+    current_user = user
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     checked_in_today = current_user.last_checkin_date == today
     return {
-        "user": {
-            "id": current_user.id,
-            "username": current_user.username,
-            "role": current_user.role,
-            "nickname": current_user.nickname,
-            "phone": current_user.phone,
-            "avatar_url": current_user.avatar_url,
-        },
+        "id": current_user.id,
+        "username": current_user.username,
+        "role": current_user.role,
         "points": current_user.points,
-        "last_checkin_date": current_user.last_checkin_date,
-        "checked_in_today": checked_in_today,
-        "created_at": current_user.created_at,
     }
 
 @router.put("/password")
