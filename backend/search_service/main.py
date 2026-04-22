@@ -13,6 +13,7 @@ from slowapi.errors import RateLimitExceeded
 
 from database import create_db_and_tables, init_admin_user
 from limiter import limiter
+from search_service.services.qdrant import ensure_collection
 from search_service.routers.auth import router as auth_router
 from search_service.routers.chat import router as chat_router
 from search_service.routers.admin import router as admin_router
@@ -25,6 +26,7 @@ from search_service.routers.organizer_docs import router as organizer_router
 async def lifespan(app: FastAPI):
     create_db_and_tables()
     init_admin_user()
+    ensure_collection()
     yield
 
 app = FastAPI(title="石化助手", lifespan=lifespan)

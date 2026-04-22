@@ -41,8 +41,14 @@ def ingest_document(
     session: Session = Depends(get_session),
     _: None = Depends(verify_organizer_key),
 ):
-    """接收来自 bipt_info_organizer 的文档并建立索引"""
-    existing = session.get(Document, doc.id)
+    """接收来自 bipt_info_organizer 的文档并建立索引（按 URL upsert）"""
+    existing = session.exec(
+        select(Document).where(Document.url == doc.url)
+    ).first() if doc.url else None
+
+    if not existing:
+        existing = session.get(Document, doc.id)
+
     if existing:
         for key, value in doc.model_dump().items():
             if value is not None:
@@ -51,14 +57,14 @@ def ingest_document(
         session.add(existing)
         session.commit()
         index_document(existing)
-        return {"message": "Document updated", "id": doc.id}
+        return {"message": "Document updated", "id": existing.id}
 
     db_doc = Document(**doc.model_dump())
     db_doc.updated_at = datetime.now(timezone.utc)
     session.add(db_doc)
     session.commit()
     index_document(db_doc)
-    return {"message": "Document ingested", "id": doc.id}
+    return {"message": "Document ingested", "id": db_doc.id}
 
 
 @router.put("/documents/{doc_id}")

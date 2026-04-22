@@ -118,7 +118,11 @@ _STOP_WORDS = {
     "的", "了", "是", "在", "和", "与", "或", "就", "都", "也",
     "有", "没有", "一个", "一些", "这个", "那个", "这些", "那些",
     "吗", "哪", "哪里", "谁", "几", "多", "少",
+    "哪几天", "哪天", "几天", "几个", "多少", "怎样",
+    "能不能", "可以", "是否", "能不能", "还是",
 }
+
+_QUESTION_PATTERN = re.compile(r"^(哪[^\s]{0,4}|几[^\s]{0,3}|什么[^\s]{0,2}|怎么[^\s]{0,2}|多[少大长高远近])$")
 
 
 def _simple_tokenize(text: str) -> list[str]:
@@ -156,8 +160,9 @@ def extract_keywords(question: str) -> tuple[list[str], bool]:
             # 3. jieba TF-IDF
             keywords = _jieba_analyser.extract_tags(text_for_jieba, topK=5)
 
-            # 4. 过滤停用词
-            filtered = [k.strip() for k in keywords if k.strip() and k not in _STOP_WORDS]
+            # 4. 过滤停用词和疑问词
+            filtered = [k.strip() for k in keywords
+                        if k.strip() and k not in _STOP_WORDS and not _QUESTION_PATTERN.match(k)]
 
             # 5. 日期作为第一个关键词
             if date_str:

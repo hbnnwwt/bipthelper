@@ -213,7 +213,7 @@
           </div>
         </div>
 
-        <!-- Loading -->
+        <!-- Loading / Streaming -->
         <div v-if="loading" class="message assistant" aria-busy="true">
           <div class="message-avatar" aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -221,7 +221,20 @@
             </svg>
           </div>
           <div class="message-body">
-            <div class="skeleton-bubble">
+            <!-- Streaming answer preview -->
+            <div v-if="streamedAnswer" class="message-bubble streaming-answer">
+              <p class="message-text" v-html="renderContent({ role: 'assistant', content: streamedAnswer, sources: [] })"></p>
+            </div>
+            <!-- Stage progress -->
+            <div v-if="streamingStages.length > 0" class="stage-list">
+              <div v-for="(s, i) in streamingStages" :key="i" class="stage-item">
+                <span class="stage-dot" :class="{ done: s.time != null }"></span>
+                <span class="stage-msg">{{ s.message }}</span>
+                <span v-if="s.time != null" class="stage-time">{{ s.time }}s</span>
+              </div>
+            </div>
+            <!-- Skeleton when no stages yet -->
+            <div v-else class="skeleton-bubble">
               <div class="skel skel-1"></div>
               <div class="skel skel-2"></div>
               <div class="skel skel-3"></div>
@@ -331,6 +344,8 @@ const messagesEl = ref(null)
 const sidebarOpen = ref(false)
 const deleteDialog = ref(null)
 const pendingDeleteId = ref(null)
+const streamingStages = ref([]) // 当前正在显示的阶段列表 [{stage, message, time}]
+const streamedAnswer = ref('') // 流式中已经接收到的回答片段
 
 onMounted(() => { loadSessions(); loadDashboard() })
 
@@ -406,26 +421,103 @@ async function sendMessage() {
 
   inputText.value = ''
   loading.value = true
+  streamingStages.value = []
+  streamedAnswer.value = ''
 
   const tempId = crypto.randomUUID()
   messages.value.push({ id: tempId, role: 'user', content, sources: [], fallback: null, _failed: false })
   scrollBottom()
 
+  // 用于收集最终数据
+  let finalAnswer = ''
+  let finalSources = []
+  let finalFallback = null
+  let finalTiming = null
+  let msgId = null
+
   try {
-    const { data } = await api.post(`/chat/sessions/${currentSessionId.value}/messages`, { content })
+    const response = await fetch(`/api/chat/sessions/${currentSessionId.value}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() // 保留不完整的行
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const data = JSON.parse(line.slice(6))
+
+        if (data.type === 'stage') {
+          // 新的阶段开始，没有耗时
+          const existing = streamingStages.value.findIndex(s => s.stage === data.stage)
+          if (existing >= 0) {
+            streamingStages.value.splice(existing)
+          }
+          streamingStages.value.push({ stage: data.stage, message: data.message, time: null })
+          scrollBottom()
+        } else if (data.type === 'keywords') {
+          // 关键词提取完成
+          const s = streamingStages.value.find(s => s.stage === 'keywords')
+          if (s) s.time = data.time
+          else streamingStages.value.push({ stage: 'keywords', message: `关键词: ${data.keywords.join('、')}`, time: data.time })
+          scrollBottom()
+        } else if (data.type === 'retrieval') {
+          // 检索完成
+          const s = streamingStages.value.find(s => s.stage === 'retrieval')
+          if (s) s.time = data.time
+          else streamingStages.value.push({ stage: 'retrieval', message: `检索到 ${data.count} 条文档`, time: data.time })
+          scrollBottom()
+        } else if (data.type === 'answer') {
+          // 最终回答（可能是部分）
+          finalAnswer = data.content
+          finalSources = data.sources || []
+          finalFallback = data.fallback || null
+          finalTiming = data.timing
+          streamedAnswer.value = data.content
+          scrollBottom()
+        } else if (data.type === 'done') {
+          msgId = data.id
+        }
+      }
+    }
+
+    // 移除临时用户消息
     const idx = messages.value.findIndex(m => m.id === tempId)
     if (idx !== -1) {
-      messages.value.splice(idx, 1, { id: tempId, role: 'user', content, sources: [], fallback: null })
+      messages.value.splice(idx, 1)
     }
-    messages.value.push({
-      id: data.id,
-      role: 'assistant',
-      content: data.content,
-      sources: data.sources || [],
-      fallback: data.fallback || null,
-    })
+
+    // 添加最终助手消息
+    if (finalAnswer) {
+      messages.value.push({
+        id: msgId || crypto.randomUUID(),
+        role: 'assistant',
+        content: finalAnswer,
+        sources: finalSources,
+        fallback: finalFallback,
+        timing: finalTiming,
+      })
+    }
+
     const s = sessions.value.find(s => s.id === currentSessionId.value)
     if (s && !s.title) s.title = content.slice(0, 30)
+
   } catch (e) {
     const idx = messages.value.findIndex(m => m.id === tempId)
     if (idx !== -1) messages.value[idx] = { ...messages.value[idx], _failed: true }
@@ -433,6 +525,8 @@ async function sendMessage() {
     toast.error('发送失败，请检查网络后重试')
   } finally {
     loading.value = false
+    streamingStages.value = []
+    streamedAnswer.value = ''
     scrollBottom()
   }
 }
@@ -893,6 +987,52 @@ function renderContent(msg) {
 @keyframes skel-pulse {
   0%   { background: var(--color-border); }
   100% { background: var(--color-surface-hover); }
+}
+
+/* ── Streaming answer preview ── */
+.streaming-answer {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  opacity: 0.85;
+}
+.streaming-answer .message-text {
+  color: var(--color-text-secondary);
+}
+
+/* ── Stage progress list ── */
+.stage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+  min-width: 200px;
+}
+.stage-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+.stage-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-border);
+  flex-shrink: 0;
+  transition: background 200ms;
+}
+.stage-dot.done {
+  background: var(--color-primary);
+}
+.stage-msg {
+  flex: 1;
+}
+.stage-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 /* ── Empty state (no session selected) ── */

@@ -67,7 +67,7 @@ if exist "%~dp0vendor\qdrant.exe" (
 REM Start backend server (serves both API and frontend)
 echo [Starting] FastAPI backend (port 8000, serves frontend)...
 cd backend
-start "SchoolInfoSearch-Backend" "%PYTHON_EXE%" -u -m uvicorn main:app --reload --port 8000 --host 127.0.0.1
+start "SchoolInfoSearch-Backend" "%PYTHON_EXE%" -u -m uvicorn search_service.main:app --reload --port 8000 --host 127.0.0.1
 
 REM Wait for backend to start
 timeout /t 3 /nobreak >nul
