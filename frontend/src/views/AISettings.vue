@@ -184,6 +184,7 @@ const providerTemplates = [
   { id: 'anthropic', name: 'Anthropic Claude', baseUrl: 'https://api.anthropic.com/v1', defaultModel: 'claude-sonnet-4-20250514', apiFormat: 'anthropic' },
   { id: 'minimax', name: 'MiniMax', baseUrl: 'https://api.minimaxi.com/anthropic', defaultModel: 'MiniMax-M2.7', apiFormat: 'anthropic' },
   { id: 'modelscope', name: 'ModelScope', baseUrl: 'https://api-inference.modelscope.cn/v1', defaultModel: 'qwen3.5-397b', apiFormat: 'openai' },
+  { id: 'openrouter', name: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1', defaultModel: 'inclusionai/ling-2.6-flash:free', apiFormat: 'openai' },
   { id: 'custom', name: '自定义', baseUrl: '', defaultModel: '', apiFormat: 'openai' },
 ]
 

@@ -105,6 +105,8 @@ def call_openai_api(provider_config: dict, messages: list, model: str = None) ->
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://bipthelper.local",
+        "X-Title": "BiptHelper",
     }
     payload = {
         "model": model,

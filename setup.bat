@@ -57,7 +57,7 @@ REM Check if python is configured (has site-packages enabled)
 set "PTH_FILE=%PYTHON_DIR%\python312._pth"
 set "NEEDS_CONFIG=0"
 
-findstr /C:"import site" "%PTH_FILE%" >nul 2>&1
+findstr /R /C:"^[^#]*import site" "%PTH_FILE%" >nul 2>&1
 if errorlevel 1 (
     set "NEEDS_CONFIG=1"
 )

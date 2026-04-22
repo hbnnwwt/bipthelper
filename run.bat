@@ -38,7 +38,7 @@ if not exist "%~dp0vendor\meilisearch.exe" (
 )
 
 REM Check if frontend is built
-if not exist "backend\assets\frontend\index.html" (
+if not exist "backend\search_service\assets\frontend\index.html" (
     echo [Warning] Frontend not built.
     echo [Info] Please run: scripts\build.bat
     echo.
