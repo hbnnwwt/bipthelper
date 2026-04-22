@@ -487,7 +487,10 @@ async function sendMessage() {
         } else if (data.type === 'keywords') {
           // 关键词提取完成
           const s = streamingStages.value.find(s => s.stage === 'keywords')
-          if (s) s.time = data.time
+          if (s) {
+            s.message = `关键词: ${data.keywords.join('、')}`
+            s.time = data.time
+          }
           else streamingStages.value.push({ stage: 'keywords', message: `关键词: ${data.keywords.join('、')}`, time: data.time })
           scrollBottom()
         } else if (data.type === 'retrieval') {
