@@ -399,12 +399,14 @@ async function selectSession(id) {
       try { parsed = JSON.parse(parsed || '{}') } catch { parsed = {} }
     }
     if (Array.isArray(parsed)) {
-      return { ...m, sources: parsed, fallback: null }
+      return { ...m, sources: parsed, fallback: null, stages: m.stages || [], stagesExpanded: false }
     }
     return {
       ...m,
       sources: parsed.sources || parsed || [],
       fallback: parsed.fallback || null,
+      stages: m.stages || [],
+      stagesExpanded: false,
     }
   })
   scrollBottom()
@@ -532,6 +534,10 @@ async function sendMessage() {
       messages.value.splice(idx, 1)
     }
 
+    // 更新会话标题为用户问题
+    const session = sessions.value.find(s => s.id === currentSessionId.value)
+    if (session && !session.title) session.title = content.slice(0, 30)
+
     // 添加最终助手消息
     if (finalAnswer) {
       // 保存当前的 stages 作为消息的详情
@@ -547,9 +553,6 @@ async function sendMessage() {
         stagesExpanded: false,
       })
     }
-
-    const s = sessions.value.find(s => s.id === currentSessionId.value)
-    if (s && !s.title) s.title = content.slice(0, 30)
 
   } catch (e) {
     const idx = messages.value.findIndex(m => m.id === tempId)
