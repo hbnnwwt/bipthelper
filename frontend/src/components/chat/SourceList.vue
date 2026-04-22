@@ -62,14 +62,10 @@ function sourceLabel(source) {
   gap: 6px;
   padding: 6px 10px;
   border-radius: 6px;
-  background: #fef3cd;
-  color: #856404;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
   font-size: 0.75rem;
   line-height: 1.4;
-}
-[data-theme="dark"] .fallback-notice {
-  background: #3d3415;
-  color: #f0d060;
 }
 .fallback-close {
   margin-left: auto;
@@ -137,27 +133,15 @@ function sourceLabel(source) {
   letter-spacing: 0.03em;
 }
 .tag-keyword {
-  background: #e0edff;
-  color: #1a56db;
+  background: var(--color-tag-keyword-bg);
+  color: var(--color-tag-keyword-text);
 }
 .tag-vector {
-  background: #e6f9ed;
-  color: #15803d;
+  background: var(--color-tag-vector-bg);
+  color: var(--color-tag-vector-text);
 }
 .tag-both {
-  background: #fff3e0;
-  color: #c2410c;
-}
-[data-theme="dark"] .tag-keyword {
-  background: #1e3a5f;
-  color: #7cb3f0;
-}
-[data-theme="dark"] .tag-vector {
-  background: #1a3d2a;
-  color: #6ee7a0;
-}
-[data-theme="dark"] .tag-both {
-  background: #3d2a15;
-  color: #f0a060;
+  background: var(--color-tag-both-bg);
+  color: var(--color-tag-both-text);
 }
 </style>

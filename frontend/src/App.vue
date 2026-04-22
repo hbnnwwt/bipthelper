@@ -56,6 +56,14 @@ onMounted(() => {
   --color-error: #dc2626;
   --color-error-hover: #b91c1c;
 
+  /* Source tags */
+  --color-tag-keyword-bg: #dbeafe;
+  --color-tag-keyword-text: #1d4ed8;
+  --color-tag-vector-bg: #dcfce7;
+  --color-tag-vector-text: #15803d;
+  --color-tag-both-bg: #ffedd5;
+  --color-tag-both-text: #c2410c;
+
   /* Neutrals — cool gray, consistent hue */
   --color-bg: #ffffff;
   --color-surface: #f9fafb;
@@ -148,6 +156,12 @@ onMounted(() => {
     --color-warning-text: #fde68a;
     --color-danger-bg: #450a0a;
     --color-danger-text: #fca5a5;
+    --color-tag-keyword-bg: #1e3a5f;
+    --color-tag-keyword-text: #7cb3f0;
+    --color-tag-vector-bg: #14532d;
+    --color-tag-vector-text: #6ee7a0;
+    --color-tag-both-bg: #431407;
+    --color-tag-both-text: #fdba74;
   }
 }
 
@@ -170,6 +184,12 @@ onMounted(() => {
   --color-warning-text: #fde68a;
   --color-danger-bg: #450a0a;
   --color-danger-text: #fca5a5;
+  --color-tag-keyword-bg: #1e3a5f;
+  --color-tag-keyword-text: #7cb3f0;
+  --color-tag-vector-bg: #14532d;
+  --color-tag-vector-text: #6ee7a0;
+  --color-tag-both-bg: #431407;
+  --color-tag-both-text: #fdba74;
 }
 
 /* Manual light override */

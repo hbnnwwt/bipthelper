@@ -210,6 +210,19 @@
               <p class="message-text" v-html="renderContent(msg)"></p>
             </div>
             <SourceList v-if="msg.role === 'assistant' && msg.sources && msg.sources.length > 0" :sources="msg.sources" :fallback="msg.fallback" class="message-sources" />
+            <div v-if="msg.role === 'assistant' && msg.timing" class="timing-summary">
+              <span class="timing-item">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                检索 {{ msg.timing.retrieval }}s
+              </span>
+              <span class="timing-sep">·</span>
+              <span class="timing-item">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                生成 {{ msg.timing.generating }}s
+              </span>
+              <span class="timing-sep">·</span>
+              <span class="timing-item total">共 {{ msg.timing.total }}s</span>
+            </div>
           </div>
         </div>
 
@@ -226,11 +239,11 @@
               <p class="message-text" v-html="renderContent({ role: 'assistant', content: streamedAnswer, sources: [] })"></p>
             </div>
             <!-- Stage progress -->
-            <div v-if="streamingStages.length > 0" class="stage-list">
+            <div v-if="streamingStages.length > 0" class="stage-list" role="status" aria-live="polite" aria-label="处理进度">
               <div v-for="(s, i) in streamingStages" :key="i" class="stage-item">
-                <span class="stage-dot" :class="{ done: s.time != null }"></span>
+                <span class="stage-dot" :class="{ done: s.time != null }" :aria-label="s.time != null ? '已完成' : '进行中'"></span>
                 <span class="stage-msg">{{ s.message }}</span>
-                <span v-if="s.time != null" class="stage-time">{{ s.time }}s</span>
+                <span v-if="s.time != null" class="stage-time" aria-label="耗时">{{ s.time }}s</span>
               </div>
             </div>
             <!-- Skeleton when no stages yet -->
@@ -965,6 +978,32 @@ function renderContent(msg) {
 
 .message-sources { margin-top: 4px; }
 
+/* ── Timing summary ── */
+.timing-summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  color: var(--color-text-faint);
+  margin-top: 4px;
+  padding: 0 2px;
+}
+.timing-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.timing-item svg {
+  opacity: 0.6;
+}
+.timing-item.total {
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+.timing-sep {
+  opacity: 0.4;
+}
+
 /* ── Geometric skeleton ── */
 .skeleton-bubble {
   background: var(--color-surface);
@@ -1015,15 +1054,31 @@ function renderContent(msg) {
   color: var(--color-text-muted);
 }
 .stage-dot {
-  width: 6px;
-  height: 6px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--color-border);
   flex-shrink: 0;
   transition: background 200ms;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stage-dot::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-text-faint);
+  transition: all 200ms;
 }
 .stage-dot.done {
+  background: var(--color-primary-muted);
+}
+.stage-dot.done::after {
   background: var(--color-primary);
+  width: 6px;
+  height: 6px;
 }
 .stage-msg {
   flex: 1;
