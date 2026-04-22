@@ -222,6 +222,18 @@
               </span>
               <span class="timing-sep">·</span>
               <span class="timing-item total">共 {{ msg.timing.total }}s</span>
+              <span v-if="msg.stages && msg.stages.length > 0" class="timing-toggle" @click="msg.stagesExpanded = !msg.stagesExpanded" role="button" tabindex="0" @keyup.enter="msg.stagesExpanded = !msg.stagesExpanded">
+                {{ msg.stagesExpanded ? '收起' : '详情' }}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ rotated: msg.stagesExpanded }"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </div>
+            <!-- Collapsible stage details -->
+            <div v-if="msg.role === 'assistant' && msg.stages && msg.stagesExpanded" class="stage-list stage-list-done">
+              <div v-for="(s, i) in msg.stages" :key="i" class="stage-item">
+                <span class="stage-dot done"></span>
+                <span class="stage-msg">{{ s.message }}</span>
+                <span v-if="s.time != null" class="stage-time">{{ s.time }}s</span>
+              </div>
             </div>
           </div>
         </div>
@@ -241,7 +253,8 @@
             <!-- Stage progress -->
             <div v-if="streamingStages.length > 0" class="stage-list" role="status" aria-live="polite" aria-label="处理进度">
               <div v-for="(s, i) in streamingStages" :key="i" class="stage-item">
-                <span class="stage-dot" :class="{ done: s.time != null }" :aria-label="s.time != null ? '已完成' : '进行中'"></span>
+                <span v-if="s.stage === 'generating' && s.time == null" class="stage-pulse" aria-label="进行中"></span>
+                <span v-else class="stage-dot" :class="{ done: s.time != null }" :aria-label="s.time != null ? '已完成' : '进行中'"></span>
                 <span class="stage-msg">{{ s.message }}</span>
                 <span v-if="s.time != null" class="stage-time" aria-label="耗时">{{ s.time }}s</span>
               </div>
@@ -521,6 +534,8 @@ async function sendMessage() {
 
     // 添加最终助手消息
     if (finalAnswer) {
+      // 保存当前的 stages 作为消息的详情
+      const finalStages = [...streamingStages.value]
       messages.value.push({
         id: msgId || crypto.randomUUID(),
         role: 'assistant',
@@ -528,6 +543,8 @@ async function sendMessage() {
         sources: finalSources,
         fallback: finalFallback,
         timing: finalTiming,
+        stages: finalStages,
+        stagesExpanded: false,
       })
     }
 
@@ -1006,6 +1023,28 @@ function renderContent(msg) {
 .timing-sep {
   opacity: 0.4;
 }
+.timing-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  color: var(--color-primary);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 120ms;
+}
+.timing-toggle:hover {
+  background: var(--color-primary-muted);
+}
+.timing-toggle svg {
+  transition: transform 200ms;
+}
+.timing-toggle svg.rotated {
+  transform: rotate(180deg);
+}
 
 /* ── Geometric skeleton ── */
 .skeleton-bubble {
@@ -1079,6 +1118,26 @@ function renderContent(msg) {
   background: var(--color-primary-muted);
 }
 .stage-dot.done::after {
+  background: var(--color-primary);
+  width: 6px;
+  height: 6px;
+}
+.stage-pulse {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-primary-muted);
+  flex-shrink: 0;
+  animation: stage-pulse 1.2s ease-in-out infinite;
+}
+@keyframes stage-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+.stage-list-done .stage-dot {
+  background: var(--color-primary-muted);
+}
+.stage-list-done .stage-dot::after {
   background: var(--color-primary);
   width: 6px;
   height: 6px;
