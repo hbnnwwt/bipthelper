@@ -68,7 +68,7 @@
           <tr v-for="d in docs" :key="d.id">
             <td><input type="checkbox" :value="d.id" v-model="selectedDocs" /></td>
             <td>
-              <a :href="d.url" target="_blank" class="doc-link">{{ d.title }}</a>
+              <button @click="openDocDetail(d)" class="doc-link-btn">{{ d.title }}</button>
               <div class="cell-url">{{ d.url }}</div>
             </td>
             <td><span class="cell-tag">{{ d.parent_category || '—' }}</span></td>
@@ -112,6 +112,69 @@
         <button @click="docPage++; loadDocs()" :disabled="docPage >= totalPages" class="btn-outline btn-sm">下一页</button>
       </div>
     </div>
+
+    <!-- ── Document detail / edit modal ── -->
+    <transition name="modal-fade">
+      <div v-if="showDocModal" class="modal-overlay" @click.self="closeDocModal">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3 class="modal-title">文档详情</h3>
+            <button @click="closeDocModal" class="modal-close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-grid">
+              <div class="field">
+                <label>标题</label>
+                <input v-model="docForm.title" type="text" class="input" />
+              </div>
+              <div class="field">
+                <label>URL</label>
+                <input v-model="docForm.url" type="text" class="input" readonly />
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>大类</label>
+                <input v-model="docForm.parent_category" type="text" class="input" />
+              </div>
+              <div class="field">
+                <label>小类</label>
+                <input v-model="docForm.sub_category" type="text" class="input" />
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>分类</label>
+                <input v-model="docForm.category" type="text" class="input" />
+              </div>
+              <div class="field">
+                <label>发布单位</label>
+                <input v-model="docForm.department" type="text" class="input" />
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>发布日期</label>
+                <input v-model="docForm.publish_date" type="text" class="input" />
+              </div>
+            </div>
+            <div class="field">
+              <label>内容</label>
+              <textarea v-model="docForm.content" class="input textarea" rows="8" placeholder="文档正文内容..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button @click="closeDocModal" class="btn-outline">取消</button>
+            <button @click="saveDocDetail" class="btn-primary" :disabled="saveLoading">
+              <span v-if="saveLoading" class="spinner-sm"></span>
+              {{ saveLoading ? '保存中...' : '保存' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -143,6 +206,15 @@ const editingDocId = ref(null)
 const editCategoryInput = ref('')
 const totalPages = computed(() => Math.ceil(totalDocs.value / docPageSize))
 const isAllSelected = computed(() => docs.value.length > 0 && selectedDocs.value.length === docs.value.length)
+
+// ── Document modal ──
+const showDocModal = ref(false)
+const saveLoading = ref(false)
+const docForm = ref({
+  id: '', title: '', url: '', content: '',
+  category: '', parent_category: '', sub_category: '',
+  department: '', publish_date: '',
+})
 
 // ── Lifecycle ──
 onMounted(() => { docPage.value = 1; loadDocCategories(); loadDocs() })
@@ -257,6 +329,38 @@ function cancelEditCategory() {
 
 function toggleSelectAllDocs() {
   selectedDocs.value = isAllSelected.value ? [] : docs.value.map(d => d.id)
+}
+
+// ── Document detail modal ──
+function openDocDetail(d) {
+  docForm.value = {
+    id: d.id,
+    title: d.title || '',
+    url: d.url || '',
+    content: d.content || '',
+    category: d.category || '',
+    parent_category: d.parent_category || '',
+    sub_category: d.sub_category || '',
+    department: d.department || '',
+    publish_date: d.publish_date || '',
+  }
+  showDocModal.value = true
+}
+
+function closeDocModal() {
+  showDocModal.value = false
+}
+
+async function saveDocDetail() {
+  if (!docForm.value.id) return
+  saveLoading.value = true
+  try {
+    await api.put(`/admin/documents/${docForm.value.id}`, docForm.value)
+    success('文档已保存')
+    closeDocModal()
+    await loadDocs()
+  } catch (e) { error(e.response?.data?.detail || '保存失败') }
+  finally { saveLoading.value = false }
 }
 </script>
 
@@ -409,26 +513,19 @@ function toggleSelectAllDocs() {
   white-space: nowrap;
 }
 
-/* ── Doc link ── */
-.doc-link {
+/* ── Doc title button ── */
+.doc-link-btn {
   color: var(--color-text);
   font-weight: 500;
-  text-decoration: none;
   font-size: 0.875rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: color 150ms;
 }
-.doc-link:hover { color: var(--color-primary); text-decoration: underline; }
-
-/* ── Category cell ── */
-.category-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-.category-text {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-}
+.doc-link-btn:hover { color: var(--color-primary); text-decoration: underline; }
 
 /* ── Inline editor ── */
 .inline-editor {
@@ -468,6 +565,72 @@ function toggleSelectAllDocs() {
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-4);
+}
+.modal-box {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 0.25rem;
+  border-radius: var(--radius);
+  transition: color 150ms, background 150ms;
+  display: flex;
+  align-items: center;
+}
+.modal-close:hover { color: var(--color-text); background: var(--color-surface); }
+
+.modal-body {
+  padding: var(--space-4);
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
 /* ── Transitions ── */
 .edit-slide-enter-active,
 .edit-slide-leave-active {
@@ -480,6 +643,28 @@ function toggleSelectAllDocs() {
   opacity: 0;
   max-height: 0;
 }
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 200ms var(--ease-out);
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* ── Spinner ── */
+.spinner-sm {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {

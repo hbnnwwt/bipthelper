@@ -22,6 +22,15 @@ router = APIRouter()
 class BulkDeleteRequest(BaseModel):
     ids: list[str]
 
+class DocumentUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    category: Optional[str] = None
+    parent_category: Optional[str] = None
+    sub_category: Optional[str] = None
+    department: Optional[str] = None
+    publish_date: Optional[str] = None
+
 # --- 用户管理 ---
 
 @router.get("/users")
@@ -411,6 +420,56 @@ def update_document_category(
     index_document(doc)
 
     return {"message": "Category updated", "category": doc.category}
+
+@router.put("/documents/{doc_id}")
+def update_document(
+    doc_id: str,
+    data: DocumentUpdateRequest,
+    current_admin: User = Depends(get_current_admin),
+    session: Session = Depends(get_session),
+):
+    """更新文档全部字段"""
+    doc = session.get(Document, doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    updated_fields = []
+    if data.title is not None:
+        doc.title = data.title
+        updated_fields.append(f"title={data.title[:20]}...")
+    if data.content is not None:
+        doc.content = data.content
+        updated_fields.append("content")
+    if data.category is not None:
+        doc.category = data.category
+        updated_fields.append(f"category={data.category}")
+    if data.parent_category is not None:
+        doc.parent_category = data.parent_category
+        updated_fields.append(f"parent_category={data.parent_category}")
+    if data.sub_category is not None:
+        doc.sub_category = data.sub_category
+        updated_fields.append(f"sub_category={data.sub_category}")
+    if data.department is not None:
+        doc.department = data.department
+        updated_fields.append(f"department={data.department}")
+    if data.publish_date is not None:
+        doc.publish_date = data.publish_date
+        updated_fields.append(f"publish_date={data.publish_date}")
+
+    doc.updated_at = datetime.now(timezone.utc).isoformat()
+    if updated_fields:
+        doc.ai_status = "manual"
+        doc.ai_reviewed_at = datetime.now(timezone.utc).isoformat()
+
+    session.add(doc)
+    session.commit()
+    add_audit_log(current_admin.id, current_admin.username, "update_document", doc_id,
+                  f"更新文档字段: {', '.join(updated_fields)}", session)
+
+    delete_document_from_index(doc_id)
+    index_document(doc)
+
+    return {"message": "Document updated", "doc_id": doc_id}
 
 @router.delete("/documents/{doc_id}")
 def delete_document(

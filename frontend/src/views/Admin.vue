@@ -50,12 +50,14 @@ import { useRouter } from 'vue-router'
 import UsersTab from '../components/admin/UsersTab.vue'
 import AuditTab from '../components/admin/AuditTab.vue'
 import InviteCodesTab from '../components/admin/InviteCodesTab.vue'
+import DocsTab from '../components/admin/DocsTab.vue'
 
 const tab = ref('users')
 const tabs = [
   { key: 'users', label: '用户管理' },
   { key: 'audit', label: '审计日志' },
   { key: 'codes', label: '激活码' },
+  { key: 'docs', label: '文档管理' },
   { key: 'ai', label: 'AI 配置' },
 ]
 
@@ -63,6 +65,7 @@ const tabComponents = {
   users: UsersTab,
   audit: AuditTab,
   codes: InviteCodesTab,
+  docs: DocsTab,
 }
 const currentTabComponent = computed(() => tabComponents[tab.value])
 const router = useRouter()
